@@ -1,44 +1,46 @@
 __all__ = []
 
 
-class AddedKey(object):
+class KeyEvent(object):
+    """
+    Describes general key event
+    """
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
+    
+    def __str__(self):
+        return self.__repr__()
+    
+
+class KeyAdded(KeyEvent):
     """
     Indicates the key was added
     """
     def __repr__(self):
         return "__added__"
     
-    def __str__(self):
-        return self.__repr__()
-
     
-class RemovedKey(object):
+class KeyRemoved(KeyEvent):
     """
     Indicates the key was removed
     """
     def __repr__(self):
         return "__removed__"
     
-    def __str__(self):
-        return self.__repr__()
-
     
-class UpdatedKey(object):
+class KeyUpdated(KeyEvent):
     """
     Indicates the key-value pair was updated
     """
     def __repr__(self):
         return "__updated__"
 
-    def __str__(self):
-        return self.__repr__()
-
     
-key_removed = RemovedKey()
+key_removed = KeyRemoved()
 __all__ += ['key_removed']
 
-key_added = AddedKey()
+key_added = KeyAdded()
 __all__ += ['key_added']
 
-key_updated = UpdatedKey()
+key_updated = KeyUpdated()
 __all__ += ['key_updated']

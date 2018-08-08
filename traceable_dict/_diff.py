@@ -48,8 +48,8 @@ class DictDiff(object):
             if (not isinstance(t1[k], dict)) and (not isinstance(t2[k], dict)):
                 if (t1[k] != t2[k]):
                     updates.append((tuple(curr_path), t1[k], key_updated))
-                else:
-                    updates.extend(DictDiff.find_diff(t1[k], t2[k], curr_path))
+            else:
+                updates.extend(DictDiff.find_diff(t1[k], t2[k], curr_path))
 
         for k in t_keys_added:
             for leaf_path, val in DictDiff._traversal(t2[k]):

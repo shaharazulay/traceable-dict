@@ -31,7 +31,7 @@ class TraceableMeta(type):
             trace = DictDiff.find_diff(before, after)
             if len(trace) > 0:
                 self.update_trace(trace)
-                return res
+            return res
         return wrapped
         
     def __init__(cls, classname, bases, class_dict):

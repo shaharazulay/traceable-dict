@@ -2,6 +2,10 @@ from _utils import key_added, key_removed, key_updated
 
 __all__ = []
 
+root = '_root_'
+
+__all__ += [root]
+
 
 class DictDiff(object):
     """
@@ -15,7 +19,7 @@ class DictDiff(object):
     """
    
     @staticmethod
-    def find_diff(t1, t2, path=['root']):
+    def find_diff(t1, t2, path=[root]):
         """
         Find deep nested difference in dicts.
         

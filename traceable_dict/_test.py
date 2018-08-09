@@ -1,7 +1,7 @@
 import unittest
 
-from _utils import key_removed, key_added, key_updated
-from _diff import DictDiff
+from traceable_dict._utils import key_removed, key_added, key_updated
+from traceable_dict._diff import DictDiff, root
 
 from traceable_dict import TraceableDict
 
@@ -9,24 +9,27 @@ from traceable_dict import TraceableDict
 class KeyEventTypeTests(unittest.TestCase):
 
     def test_equality(self):
-        from _utils import KeyAdded, KeyRemoved, KeyUpdated
+        from traceable_dict._utils import KeyAdded, KeyRemoved, KeyUpdated
         
         d_orig = {
             'old_key': 'old_value',
         }
         d = d_orig.copy()
-        
         d['new_key'] = 'new_val'
         res = DictDiff.find_diff(d_orig, d)
         self.assertEqual(len(res), 1)
 
         self.assertEquals(
-            [(('root', 'new_key'), None, key_added)],
+            [((root, 'new_key'), None, key_added)],
             res)
 
         self.assertEquals(
-            [(('root', 'new_key'), None, KeyAdded())],
+            [((root, 'new_key'), None, KeyAdded())],
             res)
+
+        self.assertEquals(KeyAdded(), KeyAdded())
+        self.assertEquals(('foo', key_added), ('foo', KeyAdded()))
+        self.assertEquals((None, key_added), (None, KeyAdded()))
 
         self.assertEquals(KeyRemoved(), KeyRemoved())
         self.assertEquals(key_updated, KeyUpdated())
@@ -60,7 +63,7 @@ class DiffTest(unittest.TestCase):
         res = DictDiff.find_diff(d_orig, d)
         self.assertEqual(len(res), 1)
         self.assertEquals(
-            [(('root', 'new_key'), None, key_added)],
+            [((root, 'new_key'), None, key_added)],
             res)
 
         d.pop('new_key')
@@ -71,33 +74,33 @@ class DiffTest(unittest.TestCase):
         res = DictDiff.find_diff(d_orig, d)
         self.assertEqual(len(res), 1)
         self.assertEquals(
-            [(('root', 'old_key_1'), 'old_value_1', key_removed)],
+            [((root, 'old_key_1'), 'old_value_1', key_removed)],
             res)
 
         d.update({'old_key_2': 'new_val'})
         res = DictDiff.find_diff(d_orig, d)
         self.assertEqual(len(res), 2)
         self.assertIn(
-            (('root', 'old_key_2'), 'old_value_2', key_updated),
+            ((root, 'old_key_2'), 'old_value_2', key_updated),
             res)
 
     def test_diff_nested(self):
         res = DictDiff.find_diff(self._d1, self._d2)
         self.assertEqual(len(res), 3)
         self.assertIn(
-            (('root', 1, 2), 'A', key_updated),
+            ((root, 1, 2), 'A', key_updated),
             res)
         self.assertIn(
-            (('root', 1, 3, 4), 'B', key_updated),
+            ((root, 1, 3, 4), 'B', key_updated),
             res)
         self.assertIn(
-            (('root', 1, 3, 5), self._d1[1][3][5], key_removed),
+            ((root, 1, 3, 5), self._d1[1][3][5], key_removed),
             res)
 
         res = DictDiff.find_diff(self._d2, self._d1)
         self.assertEqual(len(res), 3)
         self.assertIn(
-            (('root', 1, 3, 5), None, key_added),
+            ((root, 1, 3, 5), None, key_added),
             res)
         
     def test_diff_symmetry(self):
@@ -141,9 +144,19 @@ class TraceableTest(unittest.TestCase):
         cls._d2 = {1: {2: "A_UPDATED", 3: {4: "B_UPDATED"}}}
  
     def test_basic(self):
-        D1 = TraceableDict(self._d1)
-        self.assertEquals(self._d1, D1.freeze)
+        d1 = self._d1.copy()
+        D1 = TraceableDict(d1)
+        self.assertEquals(d1, D1.freeze)
 
+        self.assertEquals(D1.trace, {})
+        
+        D1['new_key'] = 'new_val'
+        d1['new_key'] = 'new_val'
+        self.assertEquals(d1, D1.freeze)
+
+        self.assertEquals(D1.trace, {
+            (root, 'new_key'): [(None, key_added)]})
+        
 
 if __name__ == '__main__':
     unittest.main()

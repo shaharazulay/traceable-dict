@@ -6,7 +6,7 @@ class KeyEvent(object):
     Describes general key event
     """
     def __eq__(self, other):
-        return isinstance(other, self.__class__)
+        return type(other) == type(self)
     
     def __str__(self):
         return self.__repr__()

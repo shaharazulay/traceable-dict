@@ -154,8 +154,42 @@ class TraceableTest(unittest.TestCase):
         d1['new_key'] = 'new_val'
         self.assertEquals(d1, D1.freeze)
 
-        self.assertEquals(D1.trace, {
-            (root, 'new_key'): [(None, key_added)]})
+        self.assertEquals(
+            D1.trace,
+            {(root, 'new_key'): [(None, key_added)]})
+
+        D1.pop('new_key')
+        self.assertNotEquals(d1, D1.freeze)
+        d1.pop('new_key')
+        self.assertEquals(d1, D1.freeze)
+
+        self.assertEquals(
+            D1.trace,
+            {(root, 'new_key'): [(None, key_added), ('new_val', key_removed)]})
+
+    def test_pipe_operator(self):
+        d1 = self._d1.copy()
+        d2 = d1.copy()
+        d2['new_key'] = 'new_val'
+
+        D1 = TraceableDict(d1)
+        self.assertEquals(d1, D1.freeze)
+        
+        D1 = D1 | d2
+        self.assertEquals(d2, D1.freeze)
+        
+        self.assertEquals(
+            D1.trace,
+            {(root, 'new_key'): [(None, key_added)]})
+
+        D2 = TraceableDict(d2)
+        self.assertEquals(d2, D2.freeze)
+        D2 = D2 | d1
+        self.assertEquals(d1, D2.freeze)
+        
+        self.assertEquals(
+            D2.trace,
+            {(root, 'new_key'): [('new_val', key_removed)]})
         
 
 if __name__ == '__main__':

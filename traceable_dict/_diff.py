@@ -11,11 +11,23 @@ class DictDiff(object):
     """
     Deep nested difference of dicts, identifying added, removed and changed keys.
     
-    **Note**: a basic assumption of this class is that dictionary describes schema. 
-    Meaning:
-    * all values are found in the leafs
-    * if a value of a leaf changes from non-dict to dict, this is a scheme change
-     which is not supported here
+    Note: a basic assumption of this class is that dictionary describes a schema. Meaning:
+
+        1. all values are found in the leafs.
+
+        2. if a value of a leaf changes from non-dict to dict, this is a scheme change.
+           Which is not supported here.
+
+    Example:
+
+        >>> from traceable_dict import DictDiff
+        >>>
+        >>> d1 = {'old_key': 'old_value'}
+        >>> d2 = d1.copy()
+        >>> d2['new_key'] = 'new_val'
+        >>>
+        >>> DictDiff.find_diff(d1, d2)
+        [(('_root_', 'new_key'), None, __added__)]
     """
    
     @staticmethod
@@ -25,14 +37,14 @@ class DictDiff(object):
         
         Params:
         -------
-        t1 : dict
+        t1 : dict,
             Original dictionary.
-        t2: dict
+        t2: dict,
             Other dictionary, to compare to.
 
         Returns:
         -------
-        updates: list
+        updates: list,
             List of updates that happened while in the transition from t1 to t2.
         """
         t1_keys = set(t1.keys())
@@ -67,6 +79,20 @@ class DictDiff(object):
 
     @staticmethod
     def _traversal(t):
+        """
+        Performs tree traversal over all leafs in the tree.
+        
+        Params:
+        -------
+        t : dict,
+            Input dictionary.
+
+        Returns:
+        -------
+        leafs: list,
+            List of tuples describing the leafs in the tree
+            Leaf tuple is of format (value, path_to_leaf).
+        """
         leafs = []
         stack = []
         stack.append((t, []))

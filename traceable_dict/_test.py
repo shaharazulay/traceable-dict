@@ -1,8 +1,9 @@
 import unittest
 
 from traceable_dict._utils import key_removed, key_added, key_updated
-from traceable_dict._diff import DictDiff, root
+from traceable_dict._diff import root
 
+from traceable_dict import DictDiff
 from traceable_dict import TraceableDict
 
 

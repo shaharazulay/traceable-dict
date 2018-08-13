@@ -6,6 +6,38 @@ _trace_key = '__trace__'
 
 
 class TraceableDict(dict):
+    """
+    A Traceable dictionary, that stores change history in an efficient way inside the object.
+    
+    Example:
+
+        >>> from traceable_dict import TraceableDict
+        >>>
+        >>> d1 = {'old_key': 'old_value'}
+        >>>
+        >>> D1 = TraceableDict(d1)
+        >>> D1
+        {'old_key': 'old_value', '__trace__': {}}
+        >>>
+        >>> D1['new_key'] = 'new_val'
+        [(('_root_', 'new_key'), None, __added__)]
+
+
+        >>> from traceable_dict import TraceableDict
+        >>>
+        >>> d1 = {'old_key': 'old_value'}
+        >>> d2 = d1.copy()
+        >>> d2['new_key'] = 'new_val
+        >>>
+        >>> D1 = TraceableDict(d1)
+        >>> D3 = D1 | d2
+        >>> D3
+        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('root', 'new_key'): [(None, __added__)]}}
+        >>>
+        >>> D1 | d2 | D1
+        {'old_key': 'old_value', '__trace__': {('root', 'new_key'): [(None, __added__), ('new_val', __removed__)]}}
+
+    """
 
     __metaclass__ = TraceableMeta
 
@@ -44,6 +76,6 @@ class TraceableDict(dict):
     @property
     def trace(self):
         return dict(self[_trace_key])
-    
+
 
 __all__ += ['TraceableDict']

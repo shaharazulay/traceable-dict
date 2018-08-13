@@ -167,11 +167,27 @@ class TraceableTest(unittest.TestCase):
             D1.trace,
             {(root, 'new_key'): [(None, key_added), ('new_val', key_removed)]})
 
+    def test_pipe_immutable(self):
+        d1 = self._d1.copy()
+        d2 = d1.copy()
+        d2['new_key'] = 'new_val'
+        
+        D1 = TraceableDict(d1)
+        self.assertEquals(d1, D1.freeze)
+
+        D1_before = D1.copy()
+        D1_tag = D1 | d2
+        self.assertEquals(d2, D1_tag.freeze)
+
+        self.assertEquals(d1, D1.freeze)
+        self.assertFalse(D1.trace)
+        self.assertEquals(D1, D1_before)
+        
     def test_pipe_operator(self):
         d1 = self._d1.copy()
         d2 = d1.copy()
         d2['new_key'] = 'new_val'
-
+        
         D1 = TraceableDict(d1)
         self.assertEquals(d1, D1.freeze)
         
@@ -190,6 +206,19 @@ class TraceableTest(unittest.TestCase):
         self.assertEquals(
             D2.trace,
             {(root, 'new_key'): [('new_val', key_removed)]})
+
+        D1 = TraceableDict(d1)
+        D2 = TraceableDict(d2)
+        D3 = D2 | D1 | D2
+        self.assertEquals(d2, D3.freeze)
+
+        trace = D3.trace[(root, 'new_key')]
+        self.assertIn(
+            ('new_val', key_removed),
+            trace)
+        self.assertIn(
+            (None, key_added),
+            trace)
         
 
 if __name__ == '__main__':

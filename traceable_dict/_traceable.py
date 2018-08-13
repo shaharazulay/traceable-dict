@@ -16,8 +16,11 @@ class TraceableDict(dict):
         
     @staticmethod
     def _update(orig, other):
+        trace = orig.trace
+        super(TraceableDict, orig).clear()
         super(TraceableDict, orig).__init__(other)
-
+        orig[_trace_key] = trace
+        
     def __or__(self, other):
         res = TraceableDict(self)
         TraceableDict._update(res, other)

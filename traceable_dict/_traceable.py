@@ -41,9 +41,9 @@ class TraceableDict(dict):
 
     __metaclass__ = TraceableMeta
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         print 'child.__init__()'
-        super(TraceableDict, self).__init__(*args)
+        super(TraceableDict, self).__init__(*args, **kwargs)
         self.setdefault(_trace_key, {})
         
     @staticmethod
@@ -51,6 +51,7 @@ class TraceableDict(dict):
         trace = orig.trace
         super(TraceableDict, orig).clear()
         super(TraceableDict, orig).__init__(other)
+        orig.timestamp = other.timestamp
         orig[_trace_key] = trace
         
     def __or__(self, other):
@@ -62,7 +63,7 @@ class TraceableDict(dict):
         trace_dict = self._copy_trace()
         for path, v, type_ in trace:
             trace_dict.setdefault(path, [])
-            trace_dict[path].append((v, type_))
+            trace_dict[path].append((v, type_, self.timestamp))
         self[_trace_key] = trace_dict
         
     def _copy_trace(self):
@@ -77,5 +78,13 @@ class TraceableDict(dict):
     def trace(self):
         return dict(self[_trace_key])
 
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, updated_time):
+        self._timestamp = updated_time
+        
 
 __all__ += ['TraceableDict']

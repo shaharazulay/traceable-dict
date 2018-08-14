@@ -145,20 +145,27 @@ class TraceableTest(unittest.TestCase):
         cls._d2 = {1: {2: "A_UPDATED", 3: {4: "B_UPDATED"}}}
  
     def test_basic(self):
+        t0, t1, t2 = 0, 1, 2
+
         d1 = self._d1.copy()
         D1 = TraceableDict(d1)
+        D1.timestamp = t0
+        
         self.assertEquals(d1, D1.freeze)
 
         self.assertEquals(D1.trace, {})
         
+        D1.timestamp = t1
         D1['new_key'] = 'new_val'
         d1['new_key'] = 'new_val'
         self.assertEquals(d1, D1.freeze)
 
         self.assertEquals(
             D1.trace,
-            {(root, 'new_key'): [(None, key_added)]})
+            {(root, 'new_key'): [(None, key_added, t1)]})
 
+        D1.timestamp = t2
+        
         D1.pop('new_key')
         self.assertNotEquals(d1, D1.freeze)
         d1.pop('new_key')
@@ -166,7 +173,9 @@ class TraceableTest(unittest.TestCase):
 
         self.assertEquals(
             D1.trace,
-            {(root, 'new_key'): [(None, key_added), ('new_val', key_removed)]})
+            {(root, 'new_key'): [
+                (None, key_added, t1),
+                ('new_val', key_removed, t2)]})
 
     def test_pipe_immutable(self):
         d1 = self._d1.copy()
@@ -174,10 +183,14 @@ class TraceableTest(unittest.TestCase):
         d2['new_key'] = 'new_val'
         
         D1 = TraceableDict(d1)
+        D1.timestamp = 0
         self.assertEquals(d1, D1.freeze)
 
+        D2 = TraceableDict(d2)
+        D2.timestamp = 1
+
         D1_before = D1.copy()
-        D1_tag = D1 | d2
+        D1_tag = D1 | D2
         self.assertEquals(d2, D1_tag.freeze)
 
         self.assertEquals(d1, D1.freeze)
@@ -185,40 +198,53 @@ class TraceableTest(unittest.TestCase):
         self.assertEquals(D1, D1_before)
         
     def test_pipe_operator(self):
+        t1, t2, t3 = 0, 1, 2
+        
         d1 = self._d1.copy()
         d2 = d1.copy()
         d2['new_key'] = 'new_val'
-        
+
         D1 = TraceableDict(d1)
+        D1.timestamp = t1
         self.assertEquals(d1, D1.freeze)
+
+        D2 = TraceableDict(d2)
+        D2.timestamp = t2
+        self.assertEquals(d2, D2.freeze)
         
-        D1 = D1 | d2
+        D1 = D1 | D2
         self.assertEquals(d2, D1.freeze)
         
         self.assertEquals(
             D1.trace,
-            {(root, 'new_key'): [(None, key_added)]})
+            {(root, 'new_key'): [(None, key_added, t2)]})
 
-        D2 = TraceableDict(d2)
-        self.assertEquals(d2, D2.freeze)
-        D2 = D2 | d1
+        D3 = TraceableDict(d1)
+        D3.timestamp = t3
+
+        D2 = D2 | D3
         self.assertEquals(d1, D2.freeze)
         
         self.assertEquals(
             D2.trace,
-            {(root, 'new_key'): [('new_val', key_removed)]})
+            {(root, 'new_key'): [('new_val', key_removed, t3)]})
 
-        D1 = TraceableDict(d1)
-        D2 = TraceableDict(d2)
-        D3 = D2 | D1 | D2
-        self.assertEquals(d2, D3.freeze)
+        D1 = TraceableDict(d2)
+        D1.timestamp = t1
+        D2 = TraceableDict(d1)
+        D2.timestamp = t2
+        D3 = TraceableDict(d2)
+        D3.timestamp = t3
+        
+        D4 = D1 | D2 | D3
+        self.assertEquals(d2, D4.freeze)
 
-        trace = D3.trace[(root, 'new_key')]
+        trace = D4.trace[(root, 'new_key')]
         self.assertIn(
-            ('new_val', key_removed),
+            ('new_val', key_removed, t2),
             trace)
         self.assertIn(
-            (None, key_added),
+            (None, key_added, t3),
             trace)
         
 

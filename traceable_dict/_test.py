@@ -173,9 +173,7 @@ class TraceableTest(unittest.TestCase):
 
         self.assertEquals(
             D1.trace,
-            {(root, 'new_key'): [
-                (None, key_added, t1),
-                ('new_val', key_removed, t2)]})
+            {(root, 'new_key'): [(None, key_added, t1), ('new_val', key_removed, t2)]})
 
     def test_pipe_immutable(self):
         d1 = self._d1.copy()
@@ -219,6 +217,11 @@ class TraceableTest(unittest.TestCase):
             D1.trace,
             {(root, 'new_key'): [(None, key_added, t2)]})
 
+        D1['new_key'] = 'updated_value'
+        self.assertEquals(
+            D1.trace,
+            {(root, 'new_key'): [(None, key_added, t2), ('new_val', key_updated, t2)]})
+        
         D3 = TraceableDict(d1)
         D3.timestamp = t3
 
@@ -228,6 +231,13 @@ class TraceableTest(unittest.TestCase):
         self.assertEquals(
             D2.trace,
             {(root, 'new_key'): [('new_val', key_removed, t3)]})
+
+    def test_pipe_operator_multiple(self):
+        t1, t2, t3 = 0, 1, 2
+        
+        d1 = self._d1.copy()
+        d2 = d1.copy()
+        d2['new_key'] = 'new_val'
 
         D1 = TraceableDict(d2)
         D1.timestamp = t1
@@ -246,7 +256,7 @@ class TraceableTest(unittest.TestCase):
         self.assertIn(
             (None, key_added, t3),
             trace)
-        
+
 
 if __name__ == '__main__':
     unittest.main()

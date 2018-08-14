@@ -16,11 +16,13 @@ class TraceableDict(dict):
         >>> d1 = {'old_key': 'old_value'}
         >>>
         >>> D1 = TraceableDict(d1)
+        >>> D1.timestamp = 0
         >>> D1
         {'old_key': 'old_value', '__trace__': {}}
         >>>
+        >>> D1.timestamp = 1
         >>> D1['new_key'] = 'new_val'
-        [(('_root_', 'new_key'), None, __added__)]
+        [(('_root_', 'new_key'), None, __added__, 1)]
 
 
         >>> from traceable_dict import TraceableDict
@@ -30,12 +32,17 @@ class TraceableDict(dict):
         >>> d2['new_key'] = 'new_val
         >>>
         >>> D1 = TraceableDict(d1)
+        >>> D1.timestamp = 0
+        >>> D2 = TraceableDict(d2)
+        >>> D2.timestamp = 1
         >>> D3 = D1 | d2
         >>> D3
-        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('root', 'new_key'): [(None, __added__)]}}
+        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('root', 'new_key'): [(None, __added__, 1)]}}
         >>>
-        >>> D1 | d2 | D1
-        {'old_key': 'old_value', '__trace__': {('root', 'new_key'): [(None, __added__), ('new_val', __removed__)]}}
+        >>> D3 = TraceableDict(d1)
+        >>> D3.timestamp = 2
+        >>> D1 | D2 | D3
+        {'old_key': 'old_value', '__trace__': {('root', 'new_key'): [(None, __added__, 1), ('new_val', __removed__, 2)]}}
 
     """
 

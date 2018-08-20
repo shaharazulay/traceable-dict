@@ -135,6 +135,47 @@ class DiffTest(unittest.TestCase):
                          
         res = DictDiff.find_diff(self._d1, {})
         self.assertEqual(len(res), len(DictDiff._traversal(self._d1)))
+
+    def test_diff_key_updated(self):
+        d_orig = {
+            'old_key_1': 'old_value_1',
+            'old_key_2': 'old_value_2'
+        }
+
+        d = d_orig.copy()
+
+        d['old_key_2'] = [1,2,3]
+        res = DictDiff.find_diff(d_orig, d)
+        self.assertEqual(len(res), 1)
+        self.assertEquals(
+            [((root, 'old_key_2'), 'old_value_2', key_updated)],
+            res)
+
+        # value changes from non-dict to dict - this is not supported
+        d['old_key_2'] = {1: "A", 2: "B"}
+        with self.assertRaises(AttributeError) as e:
+            DictDiff.find_diff(d_orig, d)
+        self.assertEquals(
+            "'str' object has no attribute 'keys'",
+            str(e.exception))
+
+    def test_diff_key_added(self):
+        d_orig = {
+            'old_key_1': 'old_value_1',
+            'old_key_2': 'old_value_2'
+        }
+
+        d = d_orig.copy()
+
+        d['new_key'] = {1: "a", 2:"b"}
+        res = DictDiff.find_diff(d_orig, d)
+        self.assertEqual(len(res), 2)
+        self.assertIn(
+            ((root, 'new_key', 1), None, key_added),
+            res)
+        self.assertIn(
+            ((root, 'new_key', 2), None, key_added),
+            res)
         
         
 class TraceableTest(unittest.TestCase):

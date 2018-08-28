@@ -1,5 +1,6 @@
 import unittest
 
+import traceable_dict
 from traceable_dict._utils import key_removed, key_added, key_updated
 from traceable_dict._diff import root
 

@@ -24,7 +24,7 @@ class _TestCommand(Command):
 setup(
     name='traceable_dict',
     version='0.0.1',
-    author='Shahar Azulay',
+    author='Shahar Azulay, Rinat Ishak',
     author_email='shahar4@gmail.com',
     url='https://github.com/shaharazulay/traceable-dict',
     packages=[
@@ -32,7 +32,7 @@ setup(
     ],
     license='bsd',
     description='Traceable Python dictionary',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     install_requires=[],
     zip_safe=False,
     package_data={},

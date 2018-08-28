@@ -17,7 +17,8 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - sudo pip install codecov
+  - pip install codecov
+  - pip install coverage
   - pip install -r requirements.txt
   - python setup.py install
 

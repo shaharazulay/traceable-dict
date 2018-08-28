@@ -1,7 +1,6 @@
 [run]
 branch = True
 source = traceable_dict
-include = */traceable_dict/*
 
 [report]
 exclude_lines =
@@ -12,3 +11,6 @@ exclude_lines =
 ignore_errors = True
 omit =
     test/*
+    
+include = 
+    */site-packages/*/traceable_dict/*

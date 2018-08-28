@@ -1,6 +1,8 @@
 TraceableDict
 ============
 
+.. image:: https://github.com/shaharazulay/traceable-dict/blob/master/docs/logo.jpg
+
 Shahar Azulay, Rinat Ishak
 
 .. image:: https://img.shields.io/badge/license-BSD--3--Clause-brightgreen.svg

@@ -5,7 +5,7 @@ TraceableDict
 
 Shahar Azulay, Rinat Ishak
 
-|Travis|_ |Codecov|_ |Python27|_ |Python34|_ |Python35|_ |License|_
+|Travis|_ |Codecov|_ |Python27|_ |Python35|_ |License|_
 
 .. |License| image:: https://img.shields.io/badge/license-BSD--3--Clause-brightgreen.svg
 .. _License: https://github.com/shaharazulay/traceable-dict/blob/master/LICENSE
@@ -18,9 +18,6 @@ Shahar Azulay, Rinat Ishak
     
 .. |Python27| image:: https://img.shields.io/badge/python-2.7-blue.svg
 .. _Python27:
-
-.. |Python34| image:: https://img.shields.io/badge/python-3.4-blue.svg
-.. _Python34:
 
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
 .. _Python35:

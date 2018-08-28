@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = */site-packages/*/traceable_dict/*
+source = traceable_dict
 
 [report]
 exclude_lines =

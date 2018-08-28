@@ -1,6 +1,9 @@
 TraceableDict
 ============
 
+**Traceable Python dictionary, that stores change history in an efficient way inside the object.**
+
+
 .. image:: https://github.com/shaharazulay/traceable-dict/blob/master/docs/logo.jpg
 
 Shahar Azulay, Rinat Ishak
@@ -22,4 +25,43 @@ Shahar Azulay, Rinat Ishak
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
 .. _Python35:
     
-**Traceable Python dictionary, that stores change history in an efficient way inside the object.**
+
+
+**Usage Examples:**
+
+   Change a single key inside an exisiting dictionary: 
+   
+        >>> from traceable_dict import TraceableDict
+        >>>
+        >>> d1 = {'old_key': 'old_value'}
+        >>>
+        >>> D1 = TraceableDict(d1)
+        >>> D1.timestamp = 0
+        >>> D1
+        {'old_key': 'old_value', '__trace__': {}}
+        >>>
+        >>> D1.timestamp = 1
+        >>> D1['new_key'] = 'new_val'
+        [(('_root_', 'new_key'), None, __added__, 1)]
+
+   Update an entire dictionary and track the changes:
+   
+        >>> from traceable_dict import TraceableDict
+        >>>
+        >>> d1 = {'old_key': 'old_value'}
+        >>> d2 = d1.copy()
+        >>> d2['new_key'] = 'new_val
+        >>>
+        >>> D1 = TraceableDict(d1)
+        >>> D1.timestamp = 0
+        >>> D2 = TraceableDict(d2)
+        >>> D2.timestamp = 1
+        >>> D3 = D1 | d2
+        >>> D3
+        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('root', 'new_key'): [(None, __added__, 1)]}}
+        >>>
+        >>> D3 = TraceableDict(d1)
+        >>> D3.timestamp = 2
+        >>> D1 | D2 | D3
+        {'old_key': 'old_value', '__trace__': {('root', 'new_key'): [(None, __added__, 1), ('new_val', __removed__, 2)]}}
+

@@ -1,8 +1,4 @@
 [run]
+source=traceable_dict
+include=traceable_dict/*
 
-branch = True
-
-[report]
-
-include = 
-    */site-packages/*/traceable_dict/*

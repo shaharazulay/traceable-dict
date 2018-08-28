@@ -14,7 +14,12 @@ Shahar Azulay, Rinat Ishak
 .. _Travis: https://travis-ci.org/shaharazulay/traceable-dict
     
 .. |Python27| image:: https://img.shields.io/badge/python-2.7-blue.svg
+.. _Python27:
+
 .. |Python34| image:: https://img.shields.io/badge/python-3.4-blue.svg
+.. _Python34:
+
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
+.. _Python35:
     
 **Traceable Python dictionary, that stores change history in an efficient way inside the object.**

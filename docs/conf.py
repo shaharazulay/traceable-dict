@@ -27,21 +27,21 @@ source_suffix = '.rst'
 
 master_doc = 'index'
 project =  u'Stacker'
-copyright = '2017, Shahar Azulay, Ariel Hanemann'
+copyright = '2018, Shahar Azulay, Rinat Ishak'
 
 version = '1.0'
 release = '1.0'
 exclude_patterns = ['_build']
 default_role = 'obj'
 
-htmlhelp_basename = 'Stacker'
+htmlhelp_basename = 'TraceableDict'
 latex_documents = [
-    (master_doc, 'Stacker.tex', u'Stacker Documentation',
-     u'Shahar Azulay, Ariel Hanemann', 'manual'),
+    (master_doc, 'TraceableDict.tex', u'TraceableDict Documentation',
+     u'Shahar Azulay, Rinat Ishak', 'manual'),
 ]
 man_pages = [
-    (master_doc, 'stacker', u'Stacker Documentation',
-     [u'Shahar Azulay, Ariel Hanemann'], 1)
+    (master_doc, 'TraceableDict', u'TraceableDict Documentation',
+     [u'Shahar Azulay, Rinat Ishak'], 1)
 ]
 
 exclude_patterns = [
@@ -59,7 +59,7 @@ exclude_patterns = [
 # documentation.
 html_theme_options = {
     'github_user': 'shaharazulay',
-    'github_repo': 'stacker',
+    'github_repo': 'tracealbe-dict',
     'github_button': True,
     'github_banner': True,
     'page_width': '100%',

@@ -4,7 +4,7 @@ TraceableDict
 **Traceable Python dictionary, that stores change history in an efficient way inside the object.**
 
 
-.. image:: https://github.com/shaharazulay/traceable-dict/blob/master/docs/logo.jpg
+.. image:: _static/logo.jpg
 
 Shahar Azulay, Rinat Ishak
 

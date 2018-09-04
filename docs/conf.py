@@ -66,8 +66,8 @@ html_theme_options = {
     'sidebar_width': '20%',
 }
 
-html_logo = '_static/logo.png'
-html_favicon = '_static/logo.ico'
+html_logo = '_static/html_logo.png'
+html_favicon = '_static/html_logo.ico'
 html_static_path = ['_static']
 
 # Activate autosectionlabel plugin

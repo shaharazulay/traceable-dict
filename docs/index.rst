@@ -5,3 +5,8 @@
 
    overview
   
+.. toctree::
+   :caption: Examples
+
+   examples
+  

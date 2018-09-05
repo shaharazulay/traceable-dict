@@ -26,7 +26,7 @@ Shahar Azulay, Rinat Ishak
 .. _Python35:
     
 .. |Documentation| image:: _static/readthedocs_logo.jpg
-.. _Documentation: https://readthedocs.org/projects/traceable-dict/
+.. _Documentation: https://traceable-dict.readthedocs.io/en/latest/
 
 |Documentation|_
 

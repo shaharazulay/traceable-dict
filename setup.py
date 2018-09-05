@@ -32,7 +32,7 @@ setup(
     ],
     license='bsd',
     description='Traceable Python dictionary',
-    long_description=open('README.rst').read(),
+    long_description=open('docs/README.rst').read(),
     install_requires=[],
     zip_safe=False,
     package_data={},

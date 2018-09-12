@@ -21,6 +21,5 @@ notifications:
   email:
     recipients:
       - shahar.azulay@daytwo.com
-      - rinat.ishak@daytwo.com
     on_success: never
     on_failure: always

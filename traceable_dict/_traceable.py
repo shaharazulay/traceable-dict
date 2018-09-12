@@ -52,18 +52,17 @@ class TraceableDict(dict):
         print 'child.__init__()'
         super(TraceableDict, self).__init__(*args, **kwargs)
         self.setdefault(_trace_key, {})
-        
-    @staticmethod
-    def _update(orig, other):
-        trace = orig.trace
-        super(TraceableDict, orig).clear()
-        super(TraceableDict, orig).__init__(other)
-        orig.timestamp = other.timestamp
-        orig[_trace_key] = trace
+
+    def _update(self, other):
+        trace = self.trace
+        super(TraceableDict, self).clear()
+        super(TraceableDict, self).__init__(other)
+        self.timestamp = other.timestamp
+        self[_trace_key] = trace
         
     def __or__(self, other):
         res = TraceableDict(self)
-        TraceableDict._update(res, other)
+        res._update(other)
         return res
     
     def update_trace(self, trace):

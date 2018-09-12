@@ -16,3 +16,11 @@ script:
 after_success:
   - codecov
   - bash < (curl -s https://codecov.io/bash)
+
+notifications:
+  email:
+    recipients:
+      - shahar.azulay@daytwo.com
+      - rinat.ishak@daytwo.com
+    on_success: never
+    on_failure: always

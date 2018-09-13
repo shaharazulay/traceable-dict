@@ -1,4 +1,5 @@
 from _meta import TraceableMeta
+from _time import get_time
 
 __all__ = []
 
@@ -16,12 +17,11 @@ class TraceableDict(dict):
         >>> d1 = {'old_key': 'old_value'}
         >>>
         >>> D1 = TraceableDict(d1)
-        >>> D1.timestamp = 0
         >>> D1
         {'old_key': 'old_value', '__trace__': {}}
         >>>
-        >>> D1.timestamp = 1
-        >>> D1['new_key'] = 'new_val'
+        >>> with set_time(timestamp=1):
+        >>>     D1['new_key'] = 'new_val'
         [(('_root_', 'new_key'), None, __added__, 1)]
 
 
@@ -32,16 +32,15 @@ class TraceableDict(dict):
         >>> d2['new_key'] = 'new_val
         >>>
         >>> D1 = TraceableDict(d1)
-        >>> D1.timestamp = 0
         >>> D2 = TraceableDict(d2)
-        >>> D2.timestamp = 1
-        >>> D3 = D1 | d2
+        >>> with set_time(timestamp=1)
+        >>>     D3 = D1 | d2
         >>> D3
         {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('root', 'new_key'): [(None, __added__, 1)]}}
         >>>
         >>> D3 = TraceableDict(d1)
-        >>> D3.timestamp = 2
-        >>> D1 | D2 | D3
+        >>> with set_time(timestamp=2)
+        >>>     D1 | D2 | D3
         {'old_key': 'old_value', '__trace__': {('root', 'new_key'): [(None, __added__, 1), ('new_val', __removed__, 2)]}}
 
     """
@@ -57,7 +56,6 @@ class TraceableDict(dict):
         trace = self.trace
         super(TraceableDict, self).clear()
         super(TraceableDict, self).__init__(other)
-        self.timestamp = other.timestamp
         self[_trace_key] = trace
         
     def __or__(self, other):
@@ -69,7 +67,7 @@ class TraceableDict(dict):
         trace_dict = self._copy_trace()
         for path, v, type_ in trace:
             trace_dict.setdefault(path, [])
-            trace_dict[path].append((v, type_, self.timestamp))
+            trace_dict[path].append((v, type_, get_time()))
         self[_trace_key] = trace_dict
         
     def _copy_trace(self):
@@ -83,14 +81,6 @@ class TraceableDict(dict):
     @property
     def trace(self):
         return dict(self[_trace_key])
-
-    @property
-    def timestamp(self):
-        return self._timestamp
-
-    @timestamp.setter
-    def timestamp(self, updated_time):
-        self._timestamp = updated_time
         
 
 __all__ += ['TraceableDict']

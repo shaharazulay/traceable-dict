@@ -35,6 +35,7 @@ Shahar Azulay, Rinat Ishak
    Change a single key inside an exisiting dictionary: 
    
         >>> from traceable_dict import TraceableDict
+        >>> from traceable_dict._time import set_time
         >>>
         >>> d1 = {'old_key': 'old_value'}
         >>>
@@ -43,9 +44,10 @@ Shahar Azulay, Rinat Ishak
         >>> D1
         {'old_key': 'old_value', '__trace__': {}}
         >>>
-        >>> D1.timestamp = 1
-        >>> D1['new_key'] = 'new_val'
-        [(('_root_', 'new_key'), None, __added__, 1)]
+        >>> with set_time(timestamp=1):
+        ...     D1['new_key'] = 'new_val'
+        >>> D1.trace
+        {('_root_', 'new_key'): [(None, __added__, 1)]}
 
    Update an entire dictionary and track the changes:
    
@@ -53,18 +55,21 @@ Shahar Azulay, Rinat Ishak
         >>>
         >>> d1 = {'old_key': 'old_value'}
         >>> d2 = d1.copy()
-        >>> d2['new_key'] = 'new_val
+        >>> with set_time(timestamp=1):
+        ...     d2['new_key'] = 'new_val'
         >>>
         >>> D1 = TraceableDict(d1)
-        >>> D1.timestamp = 0
         >>> D2 = TraceableDict(d2)
-        >>> D2.timestamp = 1
-        >>> D3 = D1 | d2
+        >>> with set_time(timestamp=1):
+        ...     D3 = D1 | d2
         >>> D3
-        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('root', 'new_key'): [(None, __added__, 1)]}}
+        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('_root_', 'new_key'): [(None, __added__, 1)]}}
         >>>
         >>> D3 = TraceableDict(d1)
-        >>> D3.timestamp = 2
-        >>> D1 | D2 | D3
-        {'old_key': 'old_value', '__trace__': {('root', 'new_key'): [(None, __added__, 1), ('new_val', __removed__, 2)]}}
+        >>> with set_time(timestamp=1):
+        ...     D2_tag = D1 | D2
+        ...     with set_time(timestamp=2):
+        ...         D3_tag = D2_tag | D3
+        >>> D3_tag
+        {'old_key': 'old_value', '__trace__': {('_root_', 'new_key'): [(None, __added__, 1), ('new_val', __removed__, 2)]}}
 

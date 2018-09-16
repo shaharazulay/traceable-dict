@@ -28,6 +28,7 @@ class DictDiff(object):
         >>>
         >>> DictDiff.find_diff(d1, d2)
         [(('_root_', 'new_key'), None, __added__)]
+
     """
    
     @staticmethod

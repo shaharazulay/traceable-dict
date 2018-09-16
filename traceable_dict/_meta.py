@@ -25,7 +25,7 @@ class TraceableMeta(type):
 
     def wrapper(self, func):
         def wrapped(self, *args, **kwargs):
-            print 'wrapper.__call__(): ', func.__name__
+            # print 'wrapper.__call__(): ', func.__name__
             before = self.freeze
             res = func(self, *args, **kwargs)
             after = self.freeze
@@ -37,7 +37,7 @@ class TraceableMeta(type):
         return wrapped
 
     def __init__(cls, classname, bases, class_dict):
-        print 'meta.__init__()'
+        # print 'meta.__init__()'
         for attr_name in dir(cls):
 
             if attr_name in TraceableMeta.EXCLUDE_CLASS_ATTR:

@@ -55,8 +55,7 @@ Shahar Azulay, Rinat Ishak
         >>>
         >>> d1 = {'old_key': 'old_value'}
         >>> d2 = d1.copy()
-        >>> with set_time(timestamp=1):
-        ...     d2['new_key'] = 'new_val'
+        >>> d2['new_key'] = 'new_val'
         >>>
         >>> D1 = TraceableDict(d1)
         >>> D2 = TraceableDict(d2)
@@ -64,12 +63,4 @@ Shahar Azulay, Rinat Ishak
         ...     D3 = D1 | d2
         >>> D3
         {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('_root_', 'new_key'): [(None, __added__, 1)]}}
-        >>>
-        >>> D3 = TraceableDict(d1)
-        >>> with set_time(timestamp=1):
-        ...     D2_tag = D1 | D2
-        ...     with set_time(timestamp=2):
-        ...         D3_tag = D2_tag | D3
-        >>> D3_tag
-        {'old_key': 'old_value', '__trace__': {('_root_', 'new_key'): [(None, __added__, 1), ('new_val', __removed__, 2)]}}
 

@@ -210,7 +210,7 @@ class TraceableDict(dict):
 
         for k in self.trace.keys():
 
-            if set(path) < set(k):
+            if path == k[1: len(path) + 1]:
                 k_aug = (root, ) + tuple(k[len(path):])
                 trace_aug[k_aug] = self.trace[k]
                 [revisions_aug.add(event[-1]) for event in self.trace[k]]

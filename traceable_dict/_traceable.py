@@ -1,8 +1,8 @@
 import copy
 
 from _meta import TraceableMeta
-from _utils import key_added, key_removed, key_updated
-from traceable_dict._diff import root
+from _utils import key_added, key_removed, key_updated, root
+from _utils import nested_getitem, nested_setitem, nested_pop
 
 __all__ = []
 
@@ -85,29 +85,10 @@ class TraceableDict(dict):
         self.setdefault(_revisions_key, [BaseRevision])
         self._has_uncommitted_changes = False
 
-    def _update(self, other):
-        trace = self.trace
-        revisions = self.revisions
-        super(TraceableDict, self).clear()
-        super(TraceableDict, self).__init__(other)
-        self[_trace_key] = trace
-        self[_revisions_key] = revisions
-        
     def __or__(self, other):
         res = TraceableDict(self)
         res._update(other)
         return res
-    
-    def update_trace(self, trace):
-        trace_dict = self._copy_trace()
-        for path, v, type_ in trace:
-            trace_dict.setdefault(path, [])
-            trace_dict[path].append((v, type_, None))
-        self[_trace_key] = trace_dict
-        self._has_uncommitted_changes = True
-        
-    def _copy_trace(self):
-        return dict((k, v[:]) for k, v in self[_trace_key].iteritems())
 
     def commit(self, revision):
         if revision is None:
@@ -147,61 +128,12 @@ class TraceableDict(dict):
             raise Exception("dictionary has uncommitted changes. you must commit or revert first.")
         return self._checkout(revision)
 
-    def _checkout(self, revision):
+    def log(self, path):
 
-        def _nested_setitem(d, nested_k, v):
-
-            for k in nested_k[:-1]:
-                if k == root:
-                    continue
-                d = d.setdefault(k, {})
-
-            d[nested_k[-1]] = v
-
-        def _nested_pop(d, nested_k):
-
-            stack = []
-            for k in nested_k[:-1]:
-                if k == root:
-                    continue
-                stack.append((d, k))
-                d = d[k]
-
-            d.pop(nested_k[-1])
-            while not d:
-                d, k = stack.pop()
-                d.pop(k)
-
-        if revision not in self.revisions:
-            raise ValueError("unknown revision %s" % revision)
-
-        revisions = list(self.revisions)
-        trace = self._copy_trace()
-        dict_ = copy.deepcopy(self.freeze)
-
-        _update_dict = {
-            key_added: lambda d, k, v: _nested_pop(d, k),
-            key_removed: lambda d, k, v: _nested_setitem(d, k, v),
-            key_updated: lambda d, k, v: _nested_setitem(d, k, v)
-        }
-
-        for path, events in self.trace.iteritems():
-            for value, type_, rev in events[::-1]:
-                if (rev is not None) and (rev <= revision):
-                    break
-
-                _update_dict[type_](dict_, path, value)
-                trace[path].pop()
-                if rev is not None:
-                    revisions.remove(rev)
-
-            if not trace[path]:
-                trace.pop(path)
-
-        result = TraceableDict(dict_)
-        result[_trace_key] = trace
-        result[_revisions_key] = revisions
-        return result
+        d_augmented = self._augment(path)
+        for rev in d_augmented.revisions:
+            print 'changeset:   %s' % rev
+            print 'value:       %s\n\n' % d_augmented.checkout(revision=rev).freeze
 
     @property
     def freeze(self):
@@ -219,6 +151,73 @@ class TraceableDict(dict):
     @property
     def has_uncommitted_changes(self):
         return self._has_uncommitted_changes
-        
+
+    def update_trace(self, trace):
+        trace_dict = self._copy_trace()
+        for path, v, type_ in trace:
+            trace_dict.setdefault(path, [])
+            trace_dict[path].append((v, type_, None))
+        self[_trace_key] = trace_dict
+        self._has_uncommitted_changes = True
+
+    def _copy_trace(self):
+        return dict((k, v[:]) for k, v in self[_trace_key].iteritems())
+
+    def _update(self, other):
+        trace = self.trace
+        revisions = self.revisions
+        super(TraceableDict, self).clear()
+        super(TraceableDict, self).__init__(other)
+        self[_trace_key] = trace
+        self[_revisions_key] = revisions
+
+    def _checkout(self, revision):
+
+        if revision not in self.revisions:
+            raise ValueError("unknown revision %s" % revision)
+
+        revisions = list(self.revisions)
+        trace = self._copy_trace()
+        dict_ = copy.deepcopy(self.freeze)
+
+        _update_dict = {
+            key_added: lambda d, k, v: nested_pop(d, k),
+            key_removed: lambda d, k, v: nested_setitem(d, k, v),
+            key_updated: lambda d, k, v: nested_setitem(d, k, v)
+        }
+
+        for path, events in self.trace.iteritems():
+            for value, type_, rev in events[::-1]:
+                if (rev is not None) and (rev <= revision):
+                    break
+
+                _update_dict[type_](dict_, path, value)
+                trace[path].pop()
+                if rev in revisions:
+                    revisions.remove(rev)
+
+            if not trace[path]:
+                trace.pop(path)
+
+        result = TraceableDict(dict_)
+        result[_trace_key] = trace
+        result[_revisions_key] = revisions
+        return result
+
+    def _augment(self, path):
+        trace_aug = {}
+        revisions_aug = set()
+
+        for k in self.trace.keys():
+
+            if set(path) < set(k):
+                k_aug = (root, ) + tuple(k[len(path):])
+                trace_aug[k_aug] = self.trace[k]
+                [revisions_aug.add(event[-1]) for event in self.trace[k]]
+
+        result = TraceableDict({path[-1]: nested_getitem(self, path)})
+        result[_trace_key] = trace_aug
+        result[_revisions_key].extend(list(revisions_aug))
+        return result
 
 __all__ += ['TraceableDict']

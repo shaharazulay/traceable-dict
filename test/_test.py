@@ -5,8 +5,7 @@ from traceable_dict import DictDiff
 from traceable_dict import TraceableDict
 from traceable_dict import BaseRevision
 
-from traceable_dict._utils import key_removed, key_added, key_updated
-from traceable_dict._diff import root
+from traceable_dict._utils import key_removed, key_added, key_updated, root
 
 
 class KeyEventTypeTests(unittest.TestCase):

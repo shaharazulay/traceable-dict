@@ -1,10 +1,6 @@
-from _utils import key_added, key_removed, key_updated
+from _utils import key_added, key_removed, key_updated, root
 
 __all__ = []
-
-root = '_root_'
-
-__all__ += [root]
 
 
 class DictDiff(object):

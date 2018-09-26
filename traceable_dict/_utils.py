@@ -69,7 +69,7 @@ def nested_pop(d, nested_k):
         d = d[k]
 
     d.pop(nested_k[-1])
-    while not d:
+    while stack and not d:
         d, k = stack.pop()
         d.pop(k)
 

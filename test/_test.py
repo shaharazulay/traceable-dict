@@ -587,6 +587,24 @@ class CheckoutTests(unittest.TestCase):
         self.assertEquals(result_base.trace, result_base_2.trace)
         self.assertEquals(result_base.revisions, result_base_2.revisions)
 
+    def test_checkout_key_removed(self):
+        r1 = 1
+
+        d1 = {}
+        d2 = {"a": "aa", "b":"bb"}
+
+        td1 = TraceableDict(d1)
+        td2 = TraceableDict(d2)
+
+        td1 = td1 | td2
+        td1.commit(revision=r1)
+
+        result_base = td1.checkout(revision=BaseRevision)
+        self.assertFalse(result_base.has_uncommitted_changes)
+        self.assertEquals(result_base.freeze, d1)
+        self.assertEquals(result_base.trace, {})
+        self.assertEquals([BaseRevision], result_base.revisions)
+
     def test_checkout_none_revision(self):
         d1 = {"a": "aa", "b":"bb"}
         td1 = TraceableDict(d1)
@@ -645,6 +663,115 @@ class CheckoutTests(unittest.TestCase):
         with self.assertRaises(Exception) as err:
             td1.checkout(revision=r1)
         self.assertTrue('dictionary has uncommitted changes. you must commit or revert first.' in err.exception)
+
+
+class LogTests(unittest.TestCase):
+
+    def test_basic(self):
+        r1, r2 = 1, 2
+
+        d1 = {"A": {"B": {"C": 1, "D": [2, 3]}}}
+        d2 = {"A": {"B": {"C": 1, "D": [2, 3], "E": 4, "F": 5}}}
+        d3 = {"A": {"B": {"C": 1, "D": [2, 3, 4]}}}
+
+        td1 = TraceableDict(d1)
+        td2 = TraceableDict(d2)
+        td3 = TraceableDict(d3)
+
+        td1 = td1 | td2
+        td1.commit(revision=r1)
+
+        td1 = td1 | td3
+        td1["a"] = 1
+        td1.commit(revision=r2)
+
+        log = td1.log(path=("A",))
+        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
+        self.assertEquals(log[BaseRevision], d1)
+        self.assertEquals(log[r1], d2)
+        self.assertEquals(log[r2], d3)
+
+        log = td1.log(path=("A", "B"))
+        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
+        self.assertEquals(log[BaseRevision], d1["A"])
+        self.assertEquals(log[r1], d2["A"])
+        self.assertEquals(log[r2], d3["A"])
+
+        log = td1.log(path=("A", "B", "C"))
+        self.assertEquals(log.keys(), [BaseRevision])
+        self.assertEquals(log[BaseRevision], {"C": 1})
+
+        log = td1.log(path=("A", "B", "D"))
+        self.assertEquals(log.keys(), [BaseRevision, r2])
+        self.assertEquals(log[BaseRevision], {"D": [2, 3]})
+        self.assertEquals(log[r2], {"D": [2, 3, 4]})
+
+        # TODO: Fix this! BaseRevision = {} r2 = {'E': {}}
+        log = td1.log(path=("A", "B", "E"))
+        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
+        self.assertEquals(log[BaseRevision], {})
+        self.assertEquals(log[r1], {'E': 4})
+        self.assertEquals(log[r2], {'E': {}})
+
+        log = td1.log(path=("A", "B", "F"))
+        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
+        self.assertEquals(log[BaseRevision], {})
+        self.assertEquals(log[r1], {'F': 5})
+        self.assertEquals(log[r2], {'F': {}})
+
+        log = td1.log(path=('a',))
+        self.assertEquals(log.keys(), [BaseRevision, r2])
+        self.assertEquals(log[BaseRevision], {})
+        self.assertEquals(log[r2], {'a': 1})
+
+    def test_log_uncommitted_changes(self):
+        r1 = 1
+        d1 = {"A": {"B": {"C": 1, "D": [2, 3], "E": 4}}}
+        d2 = {"A": {"B": {"C": 1, "D": [2], "F": 5}}}
+
+        td1 = TraceableDict(d1)
+        td2 = TraceableDict(d2)
+
+        td1 = td1 | td2
+        self.assertTrue(td1.has_uncommitted_changes)
+
+        log = td1.log(path=('A',))
+        self.assertEquals(log.keys(), [BaseRevision])
+        self.assertEquals(log[BaseRevision], d1)
+
+        td1.commit(revision=r1)
+        self.assertFalse(td1.has_uncommitted_changes)
+
+        log = td1.log(path=('A',))
+        self.assertEquals(log.keys(), [BaseRevision, r1])
+        self.assertEquals(log[BaseRevision], d1)
+        self.assertEquals(log[r1], d2)
+
+    def test_log_invalid_path(self):
+        r1 = 1
+
+        d1 = {"A": 1, "B": 2}
+        d2 = {"B": 1}
+
+        td1 = TraceableDict(d1)
+        td2 = TraceableDict(d2)
+
+        td1 = td1 | td2
+        td1.commit(revision=r1)
+
+        with self.assertRaises(ValueError) as err:
+            td1.log(path=None)
+        self.assertTrue('path cannot be None' in err.exception)
+
+        invalid_path = 'A'
+        with self.assertRaises(TypeError) as err:
+            td1.log(path=invalid_path)
+        self.assertTrue('path must be tuple' in err.exception)
+
+        unknown_path = ('A', 'B')
+        log = td1.log(path=unknown_path)
+        self.assertEquals(log.keys(), [0])
+        self.assertEquals(log[0], {'B': {}})
 
 
 if __name__ == '__main__':

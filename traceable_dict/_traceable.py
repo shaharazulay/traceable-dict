@@ -129,11 +129,14 @@ class TraceableDict(dict):
         return self._checkout(revision)
 
     def log(self, path):
-
         d_augmented = self._augment(path)
-        for rev in d_augmented.revisions:
-            print 'changeset:   %s' % rev
-            print 'value:       %s\n\n' % d_augmented.checkout(revision=rev).freeze
+        result = {}
+        for revision in d_augmented.revisions:
+            value = d_augmented._checkout(revision=revision).freeze
+            result.update({revision: value})
+            print 'changeset:   %s' % revision
+            print 'value:       %s\n\n' % value
+        return result
 
     @property
     def freeze(self):
@@ -205,18 +208,24 @@ class TraceableDict(dict):
         return result
 
     def _augment(self, path):
+        if path is None:
+            raise ValueError("path cannot be None")
+
+        if not isinstance(path, tuple):
+            raise TypeError("path must be tuple")
+
         trace_aug = {}
         revisions_aug = set()
 
         for k in self.trace.keys():
-
             if path == k[1: len(path) + 1]:
                 k_aug = (root, ) + tuple(k[len(path):])
                 trace_aug[k_aug] = self.trace[k]
-                [revisions_aug.add(event[-1]) for event in self.trace[k]]
+                [revisions_aug.add(event[-1]) for event in self.trace[k] if event[-1] is not None]
 
         result = TraceableDict({path[-1]: nested_getitem(self, path)})
         result[_trace_key] = trace_aug
+        result._has_uncommitted_changes = any([v for v in values if v[-1] is None] for values in trace_aug.values())
         result[_revisions_key].extend(list(revisions_aug))
         return result
 

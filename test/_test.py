@@ -338,6 +338,23 @@ class TraceableTest(unittest.TestCase):
             (None, key_added, 1),
             trace)
 
+    def test_init_traceable_dict(self):
+        r1 = int(time.time() * 1000)
+
+        td1 = TraceableDict({'a': 1, 'b':2})
+
+        td1['a'] = 8
+        td1.commit(revision=r1)
+
+        self.assertEquals(td1.freeze, {'a': 8, 'b': 2})
+        self.assertEquals(td1.trace, {(root, 'a'): [(1, key_updated, r1)]})
+        self.assertEquals(td1.revisions, [BaseRevision, r1])
+
+        td2 = TraceableDict(td1)
+        self.assertEquals(td2.freeze, td1.freeze)
+        self.assertEquals(td2.trace, td1.trace)
+        self.assertEquals(td2.revisions, td1.revisions)
+
 
 class CommitTest(unittest.TestCase):
 

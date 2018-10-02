@@ -26,15 +26,15 @@ class KeyEventTypeTests(unittest.TestCase):
             res)
 
         self.assertEquals(
-            [((root, 'new_key'), None, KeyAdded())],
+            [((root, 'new_key'), None, repr(KeyAdded()))],
             res)
 
         self.assertEquals(KeyAdded(), KeyAdded())
-        self.assertEquals(('foo', key_added), ('foo', KeyAdded()))
-        self.assertEquals((None, key_added), (None, KeyAdded()))
+        self.assertEquals(('foo', key_added), ('foo', repr(KeyAdded())))
+        self.assertEquals((None, key_added), (None, repr(KeyAdded())))
 
         self.assertEquals(KeyRemoved(), KeyRemoved())
-        self.assertEquals(key_updated, KeyUpdated())
+        self.assertEquals(KeyUpdated(), KeyUpdated())
 
 
 class DiffTest(unittest.TestCase):

@@ -23,7 +23,7 @@ class DictDiff(object):
         >>> d2['new_key'] = 'new_val'
         >>>
         >>> DictDiff.find_diff(d1, d2)
-        [(('_root_', 'new_key'), None, __added__)]
+        [(('_root_', 'new_key'), None, '_A_')]
 
     """
    

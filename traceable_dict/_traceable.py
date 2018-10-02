@@ -33,12 +33,12 @@ class TraceableDict(dict):
         >>>
         >>> D1['new_key'] = 'new_val'
         >>> D1.trace
-        {('_root_', 'new_key'): [(None, __added__, None)]}
+        {('_root_', 'new_key'): [(None, '_A_', None)]}
         >>> D1.has_uncommitted_changes
         True
         >>> D1.commit(revision=1)
         >>> D1.trace
-        {('_root_', 'new_key'): [(None, __added__, 1)]}
+        {('_root_', 'new_key'): [(None, '_A_', 1)]}
         >>> D1.has_uncommitted_changes
         False
         >>> D1.revisions
@@ -55,12 +55,12 @@ class TraceableDict(dict):
         >>> D2 = TraceableDict(d2)
         >>> D3 = D1 | d2
         >>> D3
-        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('_root_', 'new_key'): [(None, __added__, None)]}, '__revisions__': [0]}
+        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('_root_', 'new_key'): [(None, '_A_', None)]}, '__revisions__': [0]}
         >>> D3.has_uncommitted_changes
         True
         >>> D3.commit(revision=1)
         >>> D3
-        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('_root_', 'new_key'): [(None, __added__, 1)]}, '__revisions__': [0, 1]}
+        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {('_root_', 'new_key'): [(None, '_A_', 1)]}, '__revisions__': [0, 1]}
         >>> D3.has_uncommitted_changes
         False
         >>>
@@ -72,7 +72,7 @@ class TraceableDict(dict):
         >>> D3_tag = D2_tag | D3
         >>> D3_tag.commit(revision=2)
         >>> D3_tag
-        {'old_key': 'old_value', '__trace__': {('_root_', 'new_key'): [(None, __added__, 1), ('new_val', __removed__, 2)]}, '__revisions__': [0, 1, 2]}
+        {'old_key': 'old_value', '__trace__': {('_root_', 'new_key'): [(None, '_A_', 1), ('new_val', '_R_', 2)]}, '__revisions__': [0, 1, 2]}
 
     """
 

@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 from _meta import TraceableMeta
 from _utils import key_added, key_removed, key_updated, root
@@ -93,6 +94,10 @@ class TraceableDict(dict):
     def commit(self, revision):
         if revision is None:
             raise ValueError("revision cannot be None")
+
+        if not self.has_uncommitted_changes:
+            warnings.warn("nothing to commit")
+            return
 
         if revision == BaseRevision:
             raise ValueError("cannot commit to base revision")

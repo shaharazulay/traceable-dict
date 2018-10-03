@@ -1,5 +1,6 @@
 import time
 import unittest
+import pytest
 
 from traceable_dict import DictDiff
 from traceable_dict import TraceableDict
@@ -469,12 +470,13 @@ class CommitTest(unittest.TestCase):
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals([BaseRevision], td1.revisions)
 
-        revision = 1
-        td1.commit(revision=revision)
+        with pytest.warns(UserWarning, match='nothing to commit'):
+            td1.commit(revision=1)
+
         self.assertEquals({}, td1.trace)
         self.assertEquals(d1, td1.freeze)
         self.assertFalse(td1.has_uncommitted_changes)
-        self.assertEquals([BaseRevision, revision], td1.revisions)
+        self.assertEquals([BaseRevision], td1.revisions)
 
 
 class RevertTest(unittest.TestCase):

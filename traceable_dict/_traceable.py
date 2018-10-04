@@ -226,11 +226,12 @@ class TraceableDict(dict):
         trace_aug = {}
         revisions_aug = set([self.revisions[0]]) if self.revisions else set()
 
-        for k in self.trace.keys():
-            if path == k[1: len(path) + 1]:
-                k_aug = (root, ) + tuple(k[len(path):])
-                trace_aug[k_aug] = self.trace[k]
-                [revisions_aug.add(event[-1]) for event in self.trace[k] if event[-1] is not None]
+        for str_path in self.trace.keys():
+            _path = parse_tuple(str_path)
+            if path == _path[1: len(path) + 1]:
+                k_aug = (root, ) + tuple(_path[len(path):])
+                trace_aug[str(k_aug)] = self.trace[str_path]
+                [revisions_aug.add(event[-1]) for event in self.trace[str_path] if event[-1] is not None]
 
         result = TraceableDict({path[-1]: nested_getitem(self, path)})
         result[_trace_key] = trace_aug

@@ -96,9 +96,9 @@ __all__ += ['nested_getitem']
 def parse_tuple(value):
     try:
         t = ast.literal_eval(value)
-        if type(t) == tuple:
-            return t
-        return
+        if type(t) != tuple:
+            raise ValueError('failed to parse tuple')
+        return t
     except:
         return
 

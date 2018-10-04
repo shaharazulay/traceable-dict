@@ -3,7 +3,7 @@ import warnings
 
 from _meta import TraceableMeta
 from _utils import key_added, key_removed, key_updated, root
-from _utils import nested_getitem, nested_setitem, nested_pop
+from _utils import nested_getitem, nested_setitem, nested_pop, parse_tuple
 
 __all__ = []
 
@@ -165,8 +165,9 @@ class TraceableDict(dict):
 
         trace_dict = self._copy_trace()
         for path, v, type_ in trace:
-            trace_dict.setdefault(path, [])
-            trace_dict[path].append((v, type_, None))
+            str_path = str(path)
+            trace_dict.setdefault(str_path, [])
+            trace_dict[str_path].append((v, type_, None))
         self[_trace_key] = trace_dict
         self._has_uncommitted_changes = True
 
@@ -201,7 +202,7 @@ class TraceableDict(dict):
                 if (rev is not None) and (rev <= revision):
                     break
 
-                _update_dict[type_](dict_, path, value)
+                _update_dict[type_](dict_, parse_tuple(path), value)
                 trace[path].pop()
                 if rev in revisions:
                     revisions.remove(rev)

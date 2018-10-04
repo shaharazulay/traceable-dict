@@ -1,3 +1,5 @@
+import ast
+
 __all__ = []
 
 
@@ -56,6 +58,7 @@ def nested_setitem(d, nested_k, v):
 
     d[nested_k[-1]] = v
 
+
 __all__ += ['nested_setitem']
 
 
@@ -73,6 +76,7 @@ def nested_pop(d, nested_k):
         d, k = stack.pop()
         d.pop(k)
 
+
 __all__ += ['nested_pop']
 
 
@@ -85,4 +89,18 @@ def nested_getitem(d, nested_k):
 
     return d
 
+
 __all__ += ['nested_getitem']
+
+
+def parse_tuple(value):
+    try:
+        t = ast.literal_eval(value)
+        if type(t) == tuple:
+            return t
+        return
+    except:
+        return
+
+
+__all__ += ['parse_tuple']

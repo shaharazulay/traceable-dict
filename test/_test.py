@@ -4,7 +4,6 @@ import pytest
 
 from traceable_dict import DictDiff
 from traceable_dict import TraceableDict
-from traceable_dict import BaseRevision
 
 from traceable_dict._utils import key_removed, key_added, key_updated, root
 
@@ -188,6 +187,47 @@ class TraceableTest(unittest.TestCase):
         cls._d2 = {1: {2: "A_UPDATED", 3: {4: "B_UPDATED"}}}
 
     def test_basic(self):
+        r1, r2, r3 = 1, 2, 3
+
+        d1 = self._d1.copy()
+        D1 = TraceableDict(d1)
+
+        self.assertEquals(d1, D1.freeze)
+        self.assertEquals(D1.trace, {})
+        self.assertEquals(D1.revisions, [])
+        self.assertTrue(D1.has_uncommitted_changes)
+
+        D1.commit(revision=r1)
+
+        self.assertEquals(d1, D1.freeze)
+        self.assertEquals(D1.trace, {})
+        self.assertEquals(D1.revisions, [r1])
+        self.assertFalse(D1.has_uncommitted_changes)
+
+        D1['new_key'] = 'new_val'
+        self.assertTrue(D1.has_uncommitted_changes)
+        D1.commit(revision=r2)
+        d1['new_key'] = 'new_val'
+        self.assertEquals(d1, D1.freeze)
+        self.assertEquals([r1, r2], D1.revisions)
+        self.assertFalse(D1.has_uncommitted_changes)
+
+        self.assertEquals(
+            D1.trace,
+            {(root, 'new_key'): [(None, key_added, r2)]})
+
+        D1.pop('new_key')
+        D1.commit(revision=r3)
+        self.assertNotEquals(d1, D1.freeze)
+        d1.pop('new_key')
+        self.assertEquals(d1, D1.freeze)
+        self.assertEquals([r1, r2, r3], D1.revisions)
+
+        self.assertEquals(
+            D1.trace,
+            {(root, 'new_key'): [(None, key_added, r2), ('new_val', key_removed, r3)]})
+
+    def test_new_traceable(self):
         r1, r2 = 1, 2
 
         d1 = self._d1.copy()
@@ -195,31 +235,29 @@ class TraceableTest(unittest.TestCase):
 
         self.assertEquals(d1, D1.freeze)
         self.assertEquals(D1.trace, {})
-        self.assertEquals([BaseRevision], D1.revisions)
-        self.assertFalse(D1.has_uncommitted_changes)
+        self.assertEquals(D1.revisions, [])
+        self.assertTrue(D1.has_uncommitted_changes)
 
         D1['new_key'] = 'new_val'
+
+        self.assertEquals(D1.freeze, {1: {2: 'A', 3: {4: 'B', 5: [1, 2, 3]}}, 'new_key': 'new_val'})
+        self.assertEquals(D1.trace, {})
+        self.assertEquals(D1.revisions, [])
         self.assertTrue(D1.has_uncommitted_changes)
+
+        D1['new_key'] = 'updated_val'
+
+        self.assertEquals(D1.freeze, {1: {2: 'A', 3: {4: 'B', 5: [1, 2, 3]}}, 'new_key': 'updated_val'})
+        self.assertEquals(D1.trace, {})
+        self.assertEquals(D1.revisions, [])
+        self.assertTrue(D1.has_uncommitted_changes)
+
         D1.commit(revision=r1)
-        d1['new_key'] = 'new_val'
-        self.assertEquals(d1, D1.freeze)
-        self.assertEquals([BaseRevision, r1], D1.revisions)
+
         self.assertFalse(D1.has_uncommitted_changes)
-
-        self.assertEquals(
-            D1.trace,
-            {(root, 'new_key'): [(None, key_added, r1)]})
-
-        D1.pop('new_key')
-        D1.commit(revision=r2)
-        self.assertNotEquals(d1, D1.freeze)
-        d1.pop('new_key')
-        self.assertEquals(d1, D1.freeze)
-        self.assertEquals([BaseRevision, r1, r2], D1.revisions)
-
-        self.assertEquals(
-            D1.trace,
-            {(root, 'new_key'): [(None, key_added, r1), ('new_val', key_removed, r2)]})
+        self.assertEquals(D1.freeze, {1: {2: 'A', 3: {4: 'B', 5: [1, 2, 3]}}, 'new_key': 'updated_val'})
+        self.assertEquals(D1.trace, {})
+        self.assertEquals(D1.revisions, [r1])
 
     def test_full(self):
         r1 = int(time.time() * 1000)
@@ -229,21 +267,21 @@ class TraceableTest(unittest.TestCase):
         d2['new_key'] = 'new_val'
 
         D1 = TraceableDict(d1)
-        D1_base = TraceableDict(d1)
         D2 = TraceableDict(d2)
         D3 = TraceableDict(self._d2)
 
         D1 = D1 | D2
+        D1_Base = TraceableDict(D1)
         D1.commit(revision=r1)
 
         self.assertEquals(D1.freeze, d2)
-        self.assertEquals(D1.trace, {(root, 'new_key'): [(None, key_added, r1)]})
-        self.assertEquals(D1.revisions, [BaseRevision, r1])
+        self.assertEquals(D1.trace, {})
+        self.assertEquals(D1.revisions, [r1])
 
         D1 = D1 | D3
         self.assertTrue(D1.has_uncommitted_changes)
         self.assertEquals(D1.freeze, self._d2)
-        self.assertEquals(D1.revisions, [BaseRevision, r1])
+        self.assertEquals(D1.revisions, [r1])
 
         r2 = int((time.time() - 5000) * 1000)
         with self.assertRaises(ValueError) as err:
@@ -255,11 +293,11 @@ class TraceableTest(unittest.TestCase):
 
         self.assertFalse(D1.has_uncommitted_changes)
         self.assertEquals(D1.freeze, self._d2)
-        self.assertEquals(D1.revisions, [BaseRevision, r1, r2])
+        self.assertEquals(D1.revisions, [r1, r2])
 
-        result_base = D1.checkout(revision=BaseRevision)
-        self.assertEquals(result_base.freeze, D1_base.freeze)
-        self.assertEquals(result_base.revisions, [BaseRevision])
+        result_base = D1.checkout(revision=r1)
+        self.assertEquals(result_base.freeze, D1_Base.freeze)
+        self.assertEquals(result_base.revisions, [r1])
 
     def test_pipe_immutable(self):
         d1 = self._d1.copy()
@@ -291,21 +329,20 @@ class TraceableTest(unittest.TestCase):
         self.assertEquals(d1, D1.freeze)
 
         D2 = TraceableDict(d2)
+        D2.commit(revision=r2)
         self.assertEquals(d2, D2.freeze)
 
         D1 = D1 | D2
-        D1.commit(revision=r2)
+        D1.commit(revision=r1)
         self.assertEquals(d2, D1.freeze)
 
-        self.assertEquals(
-            D1.trace,
-            {(root, 'new_key'): [(None, key_added, r2)]})
+        self.assertEquals(D1.trace, {})
 
         D1['new_key'] = 'updated_value'
         D1.commit(revision=r2)
         self.assertEquals(
             D1.trace,
-            {(root, 'new_key'): [(None, key_added, r2), ('new_val', key_updated, r2)]})
+            {(root, 'new_key'): [('new_val', key_updated, r2)]})
 
         D3 = TraceableDict(d1)
 
@@ -318,38 +355,42 @@ class TraceableTest(unittest.TestCase):
             {(root, 'new_key'): [('new_val', key_removed, r3)]})
 
     def test_pipe_operator_multiple(self):
-
+        r1, r2 = 1, 2
         d1 = self._d1.copy()
         d2 = d1.copy()
         d2['new_key'] = 'new_val'
 
         D1 = TraceableDict(d2)
+        D1.commit(revision=r1)
         D2 = TraceableDict(d1)
+        D2.commit(revision=r1)
         D3 = TraceableDict(d2)
+        D3.commit(revision=r1)
 
         D4 = D1 | D2 | D3
-        D4.commit(revision=1)
+        D4.commit(revision=r2)
         self.assertEquals(d2, D4.freeze)
 
         trace = D4.trace[(root, 'new_key')]
         self.assertIn(
-            ('new_val', key_removed, 1),
+            ('new_val', key_removed, r2),
             trace)
         self.assertIn(
-            (None, key_added, 1),
+            (None, key_added, r2),
             trace)
 
     def test_init_traceable_dict(self):
-        r1 = int(time.time() * 1000)
+        r1, r2 = int((time.time()*1) * 1000), int((time.time()*2) * 1000)
 
         td1 = TraceableDict({'a': 1, 'b':2})
-
-        td1['a'] = 8
         td1.commit(revision=r1)
 
+        td1['a'] = 8
+        td1.commit(revision=r2)
+
         self.assertEquals(td1.freeze, {'a': 8, 'b': 2})
-        self.assertEquals(td1.trace, {(root, 'a'): [(1, key_updated, r1)]})
-        self.assertEquals(td1.revisions, [BaseRevision, r1])
+        self.assertEquals(td1.trace, {(root, 'a'): [(1, key_updated, r2)]})
+        self.assertEquals(td1.revisions, [r1, r2])
 
         td2 = TraceableDict(td1)
         self.assertEquals(td2.freeze, td1.freeze)
@@ -360,33 +401,63 @@ class TraceableTest(unittest.TestCase):
 class CommitTest(unittest.TestCase):
 
     def test_basic(self):
+        r1, r2 = 1, 2
         d1 = {"a": "aa", "b":"bb"}
 
         td1 = TraceableDict(d1)
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([], td1.revisions)
+        self.assertEquals({}, td1.trace)
+        self.assertTrue(td1.has_uncommitted_changes)
+
+        td1.commit(r1)
+        self.assertEquals([r1], td1.revisions)
+        self.assertEquals({}, td1.trace)
         self.assertFalse(td1.has_uncommitted_changes)
 
         td1["a"] = 1
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([r1], td1.revisions)
         self.assertTrue(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, {'a': 1, 'b': 'bb'})
         self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, None)]})
 
-        r1 = 1
-        td1.commit(revision=r1)
+        td1.commit(revision=r2)
 
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, {'a': 1, 'b': 'bb'})
-        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, 1)]})
-        self.assertEquals([BaseRevision, r1], td1.revisions)
+        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, r2)]})
+        self.assertEquals([r1, r2], td1.revisions)
+
+    def test_first_commit(self):
+        d1 = {"a": "aa", "b":"bb"}
+        d2 = {"a": "aa", "b":"bb", "c": "cc"}
+
+        td1 = TraceableDict(d1)
+        self.assertEquals(d1, td1.freeze)
+        self.assertEquals([], td1.revisions)
+        self.assertEquals({}, td1.trace)
+        self.assertTrue(td1.has_uncommitted_changes)
+
+        td2 = TraceableDict(d2)
+
+        td1 = td1 | td2
+
+        self.assertEquals(td2.freeze, td1.freeze)
+        self.assertEquals([], td1.revisions)
+        self.assertEquals({}, td1.trace)
+        self.assertTrue(td1.has_uncommitted_changes)
+
+        r1 = 1
+        td1.commit(revision=r1)
+
+        self.assertEquals(td2.freeze, td1.freeze)
+        self.assertEquals([r1], td1.revisions)
+        self.assertEquals({}, td1.trace)
+        self.assertFalse(td1.has_uncommitted_changes)
 
     def test_commit_none_revision(self):
         d1 = {"a": "aa", "b":"bb"}
         td1 = TraceableDict(d1)
-        self.assertEquals([BaseRevision], td1.revisions)
-        self.assertFalse(td1.has_uncommitted_changes)
-
-        td1["a"] = 1
+        self.assertEquals([], td1.revisions)
         self.assertTrue(td1.has_uncommitted_changes)
 
         with self.assertRaises(ValueError) as err:
@@ -394,29 +465,34 @@ class CommitTest(unittest.TestCase):
 
         self.assertTrue('revision cannot be None' in err.exception)
         self.assertTrue(td1.has_uncommitted_changes)
-        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, None)]})
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals(td1.trace, {})
+        self.assertEquals(td1.revisions, [])
 
-    def test_commit_base_revision(self):
+    def test_commit_current_revision(self):
+        r1 = 1
+
         d1 = {"a": "aa", "b":"bb"}
         td1 = TraceableDict(d1)
-        self.assertEquals([BaseRevision], td1.revisions)
+        td1.commit(revision=r1)
+        self.assertEquals([r1], td1.revisions)
         self.assertFalse(td1.has_uncommitted_changes)
 
         td1["a"] = 1
         self.assertTrue(td1.has_uncommitted_changes)
 
         with self.assertRaises(ValueError) as err:
-            td1.commit(revision=BaseRevision)
+            td1.commit(revision=r1)
 
-        self.assertTrue('cannot commit to base revision' in err.exception)
+        self.assertTrue('cannot commit to earlier revision' in err.exception)
         self.assertTrue(td1.has_uncommitted_changes)
         self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, None)]})
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([r1], td1.revisions)
 
     def test_commit_earlier_revision(self):
+        r1 = 1
         td1 = TraceableDict({"a": "aa", "b":"bb"})
-        self.assertEquals([BaseRevision], td1.revisions)
+        td1.commit(revision=1)
+        self.assertEquals([1], td1.revisions)
         self.assertFalse(td1.has_uncommitted_changes)
 
         td1["a"] = 1
@@ -424,7 +500,7 @@ class CommitTest(unittest.TestCase):
 
         revision = 3
         td1.commit(revision=revision)
-        self.assertEquals([BaseRevision, revision], td1.revisions)
+        self.assertEquals([r1, revision], td1.revisions)
         self.assertFalse(td1.has_uncommitted_changes)
 
         td1["a"] = 2
@@ -437,55 +513,37 @@ class CommitTest(unittest.TestCase):
         self.assertTrue('cannot commit to earlier revision' in err.exception)
         self.assertTrue(td1.has_uncommitted_changes)
         self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, revision), (1, key_updated, None)]})
-        self.assertEquals([BaseRevision, revision], td1.revisions)
-
-    def test_commit_same_revision(self):
-        td1 = TraceableDict({"a": "aa", "b":"bb"})
-        self.assertEquals([BaseRevision], td1.revisions)
-        self.assertFalse(td1.has_uncommitted_changes)
-
-        td1["a"] = 1
-        self.assertTrue(td1.has_uncommitted_changes)
-
-        revision = 3
-        td1.commit(revision=revision)
-        self.assertEquals([BaseRevision, revision], td1.revisions)
-        self.assertFalse(td1.has_uncommitted_changes)
-
-        td1["a"] = 2
-        self.assertTrue(td1.has_uncommitted_changes)
-        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, revision), (1, key_updated, None)]})
-
-        td1.commit(revision=revision)
-        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, revision), (1, key_updated, revision)]})
-        self.assertEquals([BaseRevision, revision], td1.revisions)
-        self.assertFalse(td1.has_uncommitted_changes)
+        self.assertEquals([r1, revision], td1.revisions)
 
     def test_commit_no_diff(self):
+        base_revision = 1
         d1 = {"a": "aa", "b":"bb"}
 
         td1 = TraceableDict(d1)
+        td1.commit(revision=base_revision)
         self.assertEquals({}, td1.trace)
         self.assertEquals(d1, td1.freeze)
         self.assertFalse(td1.has_uncommitted_changes)
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([base_revision], td1.revisions)
 
         with pytest.warns(UserWarning, match='nothing to commit'):
-            td1.commit(revision=1)
+            td1.commit(revision=18)
 
         self.assertEquals({}, td1.trace)
         self.assertEquals(d1, td1.freeze)
         self.assertFalse(td1.has_uncommitted_changes)
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([base_revision], td1.revisions)
 
 
 class RevertTest(unittest.TestCase):
 
     def test_basic(self):
+        base_revision = 0
         d1 = {"a": "aa", "b":"bb"}
 
         td1 = TraceableDict(d1)
-        self.assertEquals([BaseRevision], td1.revisions)
+        td1.commit(revision=base_revision)
+        self.assertEquals([base_revision], td1.revisions)
 
         r1 = 1
         td1["a"] = 1
@@ -498,151 +556,184 @@ class RevertTest(unittest.TestCase):
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, {"a": 1, "b": 2})
         self.assertEquals(td1.trace, {(root, "b"): [("bb", key_updated, 2)], (root, "a"): [("aa", key_updated, 1)]})
-        self.assertEquals([BaseRevision, r1, r2], td1.revisions)
+        self.assertEquals([base_revision, r1, r2], td1.revisions)
 
         td1["b"] = 3
 
         self.assertTrue(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, {"a": 1, "b": 3})
         self.assertEquals(td1.trace, {(root, "b"): [("bb", key_updated, 2), (2, key_updated, None)], (root, "a"): [("aa", key_updated, 1)]})
-        self.assertEquals([BaseRevision, r1, r2], td1.revisions)
+        self.assertEquals([base_revision, r1, r2], td1.revisions)
 
         td1.revert()
 
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, {"a": 1, "b": 2})
         self.assertEquals(td1.trace, {(root, "b"): [("bb", key_updated, 2)], (root, "a"): [("aa", key_updated, 1)]})
-        self.assertEquals([BaseRevision, r1, r2], td1.revisions)
+        self.assertEquals([base_revision, r1, r2], td1.revisions)
 
-    def test_revert_to_base_revision(self):
+    def test_revert_no_revisions(self):
         d1 = {"a": "aa", "b":"bb"}
 
         td1 = TraceableDict(d1)
+        self.assertTrue(td1.has_uncommitted_changes)
+        self.assertEquals(td1.freeze, d1)
+        self.assertEquals(td1.trace, {})
+        self.assertEquals(td1.revisions, [])
+
+        td1.revert()
+
+        self.assertTrue(td1.has_uncommitted_changes)
+        self.assertEquals(td1.freeze, d1)
+        self.assertEquals(td1.trace, {})
+        self.assertEquals(td1.revisions, [])
+
+    def test_revert_to_first_revision(self):
+        base_revision = 0
+        d1 = {"a": "aa", "b":"bb"}
+
+        td1 = TraceableDict(d1)
+        td1.commit(revision=base_revision)
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, d1)
         self.assertEquals(td1.trace, {})
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([base_revision], td1.revisions)
 
         td1["b"] = 1
         self.assertTrue(td1.has_uncommitted_changes)
         self.assertNotEquals(td1.freeze, d1)
         self.assertNotEquals(td1.trace, {})
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([base_revision], td1.revisions)
 
         td1.revert()
 
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, d1)
         self.assertEquals(td1.trace, {})
-        self.assertEquals([BaseRevision], td1.revisions)
+        self.assertEquals([base_revision], td1.revisions)
 
     def test_revert_without_uncommitted_changes(self):
+        r1, r2 = 1, 2
         d1 = {"a": "aa", "b":"bb"}
 
         td1 = TraceableDict(d1)
-        self.assertEquals([BaseRevision], td1.revisions)
-        self.assertEquals(td1.freeze, {"a": "aa", "b": "bb"})
-        self.assertEquals(td1.trace, {})
-        self.assertFalse(td1.has_uncommitted_changes)
-
-        td1.revert()
-
-        td1 = TraceableDict(d1)
-        self.assertEquals([BaseRevision], td1.revisions)
-        self.assertEquals(td1.freeze, {"a": "aa", "b": "bb"})
-        self.assertEquals(td1.trace, {})
-        self.assertFalse(td1.has_uncommitted_changes)
-
-        r1 = 1
-        td1["a"] = 1
         td1.commit(revision=r1)
-
-        self.assertEquals([BaseRevision, r1], td1.revisions)
-        self.assertEquals(td1.freeze, {"a": 1, "b": "bb"})
-        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, 1)]})
+        self.assertEquals([r1], td1.revisions)
+        self.assertEquals(td1.freeze, d1)
+        self.assertEquals(td1.trace, {})
         self.assertFalse(td1.has_uncommitted_changes)
 
         td1.revert()
 
-        self.assertEquals([BaseRevision, r1], td1.revisions)
+        self.assertEquals([r1], td1.revisions)
+        self.assertEquals(td1.freeze, d1)
+        self.assertEquals(td1.trace, {})
+        self.assertFalse(td1.has_uncommitted_changes)
+
+        td1["a"] = 1
+        td1.commit(revision=r2)
+
+        _trace = {(root, 'a'): [('aa', key_updated, r2)]}
+
+        self.assertEquals([r1, r2], td1.revisions)
         self.assertEquals(td1.freeze, {"a": 1, "b": "bb"})
-        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, 1)]})
+        self.assertEquals(td1.trace, _trace)
+        self.assertFalse(td1.has_uncommitted_changes)
+
+        td1.revert()
+
+        self.assertEquals([r1, r2], td1.revisions)
+        self.assertEquals(td1.freeze, {"a": 1, "b": "bb"})
+        self.assertEquals(td1.trace, _trace)
         self.assertFalse(td1.has_uncommitted_changes)
 
 
 class CheckoutTests(unittest.TestCase):
 
     def test_basic(self):
-        r1, r2 = 1, 2
+        r1, r2, r3 = 1, 2, 3
 
         d1 = {"a": "aa", "b":"bb"}
         td1 = TraceableDict(d1)
-
-        td1["a"] = 1
         td1.commit(revision=r1)
 
-        td1["b"] = 2
+        td1["a"] = 2
         td1.commit(revision=r2)
 
-        self.assertEquals(td1.freeze, {'a': 1, 'b': 2})
-        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, r1)], (root, 'b'): [('bb', key_updated, r2)]})
-        self.assertEquals([BaseRevision, r1, r2], td1.revisions)
+        td1["b"] = 3
+        td1.commit(revision=r3)
 
-        result_r1 = td1.checkout(revision=r1)
-        self.assertFalse(result_r1.has_uncommitted_changes)
-        self.assertEquals(result_r1.freeze, {'a': 1, 'b': 'bb'})
-        self.assertEquals(result_r1.trace, {(root, 'a'): [('aa', key_updated, 1)]})
-        self.assertEquals([BaseRevision, r1], result_r1.revisions)
+        self.assertEquals(td1.freeze, {'a': 2, 'b': 3})
+        self.assertEquals(td1.trace, {(root, 'a'): [('aa', key_updated, r2)], (root, 'b'): [('bb', key_updated, r3)]})
+        self.assertEquals([r1, r2, r3], td1.revisions)
 
-        result_base = td1.checkout(revision=BaseRevision)
-        self.assertFalse(result_base.has_uncommitted_changes)
-        self.assertEquals(result_base.freeze, {'a': 'aa', 'b': 'bb'})
-        self.assertEquals(result_base.trace, {})
-        self.assertEquals([BaseRevision], result_base.revisions)
+        result_r2 = td1.checkout(revision=r2)
+        self.assertFalse(result_r2.has_uncommitted_changes)
+        self.assertEquals(result_r2.freeze, {'a': 2, 'b': 'bb'})
+        self.assertEquals(result_r2.trace, {(root, 'a'): [('aa', key_updated, r2)]})
+        self.assertEquals([r1, r2], result_r2.revisions)
 
-        result_base_2 = result_r1.checkout(revision=BaseRevision)
-        self.assertEquals(result_base.has_uncommitted_changes, result_base_2.has_uncommitted_changes)
-        self.assertEquals(result_base.freeze, result_base_2.freeze)
-        self.assertEquals(result_base.trace, result_base_2.trace)
-        self.assertEquals(result_base.revisions, result_base_2.revisions)
+        result_r1_1 = td1.checkout(revision=r1)
+        self.assertFalse(result_r1_1.has_uncommitted_changes)
+        self.assertEquals(result_r1_1.freeze, {'a': 'aa', 'b': 'bb'})
+        self.assertEquals(result_r1_1.trace, {})
+        self.assertEquals([r1], result_r1_1.revisions)
+
+        result_r1_2 = result_r2.checkout(revision=r1)
+        self.assertEquals(result_r1_1.has_uncommitted_changes, result_r1_2.has_uncommitted_changes)
+        self.assertEquals(result_r1_1.freeze, result_r1_2.freeze)
+        self.assertEquals(result_r1_1.trace, result_r1_2.trace)
+        self.assertEquals(result_r1_1.revisions, result_r1_2.revisions)
 
     def test_checkout_key_removed(self):
-        r1 = 1
+        r1, r2 = 1, 2
 
         d1 = {}
         d2 = {"a": "aa", "b":"bb"}
 
         td1 = TraceableDict(d1)
+        td1.commit(revision=r1)
         td2 = TraceableDict(d2)
+        td2.commit(revision=r1)
 
         td1 = td1 | td2
-        td1.commit(revision=r1)
+        td1.commit(revision=r2)
 
-        result_base = td1.checkout(revision=BaseRevision)
-        self.assertFalse(result_base.has_uncommitted_changes)
-        self.assertEquals(result_base.freeze, d1)
-        self.assertEquals(result_base.trace, {})
-        self.assertEquals([BaseRevision], result_base.revisions)
+        result_r1 = td1.checkout(revision=r1)
+        self.assertFalse(result_r1.has_uncommitted_changes)
+        self.assertEquals(result_r1.freeze, d1)
+        self.assertEquals(result_r1.trace, {})
+        self.assertEquals([r1], result_r1.revisions)
+
+    def test_checkout_no_revisions(self):
+        d1 = {"a": "aa", "b":"bb"}
+        td1 = TraceableDict(d1)
+
+        with self.assertRaises(Exception) as err:
+            td1.checkout(revision=1)
+        self.assertTrue('no versions available. you must commit the initiate revision first.' in err.exception)
 
     def test_checkout_none_revision(self):
         d1 = {"a": "aa", "b":"bb"}
         td1 = TraceableDict(d1)
+        td1.commit(revision=1)
 
         with self.assertRaises(ValueError) as err:
             td1.checkout(revision=None)
         self.assertTrue('unknown revision None' in err.exception)
 
     def test_checkout_unknown_revision(self):
-        r1, r2 = 1, 2
+        r1, r2, r3 = 1, 2, 3
 
         d1 = {"a": "aa", "b":"bb"}
         td1 = TraceableDict(d1)
-
-        td1["a"] = 1
         td1.commit(revision=r1)
 
-        td1["b"] = 2
+        td1["a"] = 1
         td1.commit(revision=r2)
+
+        td1["b"] = 2
+        td1.commit(revision=r3)
 
         revision = 55
         with self.assertRaises(ValueError) as err:
@@ -687,84 +778,96 @@ class CheckoutTests(unittest.TestCase):
 class LogTests(unittest.TestCase):
 
     def test_basic(self):
-        r1, r2 = 1, 2
+        r1, r2, r3 = 1, 2, 3
 
         d1 = {"A": {"B": {"C": 1, "D": [2, 3]}}}
         d2 = {"A": {"B": {"C": 1, "D": [2, 3], "E": 4, "F": 5}}}
         d3 = {"A": {"B": {"C": 1, "D": [2, 3, 4]}}}
 
         td1 = TraceableDict(d1)
+        td1.commit(revision=r1)
         td2 = TraceableDict(d2)
+        td2.commit(revision=r1)
         td3 = TraceableDict(d3)
+        td3.commit(revision=r1)
 
         td1 = td1 | td2
-        td1.commit(revision=r1)
+        td1.commit(revision=r2)
 
         td1 = td1 | td3
         td1["a"] = 1
-        td1.commit(revision=r2)
+        td1.commit(revision=r3)
 
         log = td1.log(path=("A",))
-        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
-        self.assertEquals(log[BaseRevision], d1)
-        self.assertEquals(log[r1], d2)
-        self.assertEquals(log[r2], d3)
+        self.assertEquals(log.keys(), [r1, r2, r3])
+        self.assertEquals(log[r1], d1)
+        self.assertEquals(log[r2], d2)
+        self.assertEquals(log[r3], d3)
 
         log = td1.log(path=("A", "B"))
-        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
-        self.assertEquals(log[BaseRevision], d1["A"])
-        self.assertEquals(log[r1], d2["A"])
-        self.assertEquals(log[r2], d3["A"])
+        self.assertEquals(log.keys(), [r1, r2, r3])
+        self.assertEquals(log[r1], d1["A"])
+        self.assertEquals(log[r2], d2["A"])
+        self.assertEquals(log[r3], d3["A"])
 
         log = td1.log(path=("A", "B", "C"))
-        self.assertEquals(log.keys(), [BaseRevision])
-        self.assertEquals(log[BaseRevision], {"C": 1})
+        self.assertEquals(log.keys(), [r1])
+        self.assertEquals(log[r1], {"C": 1})
 
         log = td1.log(path=("A", "B", "D"))
-        self.assertEquals(log.keys(), [BaseRevision, r2])
-        self.assertEquals(log[BaseRevision], {"D": [2, 3]})
-        self.assertEquals(log[r2], {"D": [2, 3, 4]})
+        self.assertEquals(log.keys(), [r1, r3])
+        self.assertEquals(log[r1], {"D": [2, 3]})
+        self.assertEquals(log[r3], {"D": [2, 3, 4]})
 
         # TODO: Fix this! BaseRevision = {} r2 = {'E': {}}
         log = td1.log(path=("A", "B", "E"))
-        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
-        self.assertEquals(log[BaseRevision], {})
-        self.assertEquals(log[r1], {'E': 4})
-        self.assertEquals(log[r2], {'E': {}})
+        self.assertEquals(log.keys(), [r1, r2, r3])
+        self.assertEquals(log[r1], {})
+        self.assertEquals(log[r2], {'E': 4})
+        self.assertEquals(log[r3], {'E': {}})
 
         log = td1.log(path=("A", "B", "F"))
-        self.assertEquals(log.keys(), [BaseRevision, r1, r2])
-        self.assertEquals(log[BaseRevision], {})
-        self.assertEquals(log[r1], {'F': 5})
-        self.assertEquals(log[r2], {'F': {}})
+        self.assertEquals(log.keys(), [r1, r2, r3])
+        self.assertEquals(log[r1], {})
+        self.assertEquals(log[r2], {'F': 5})
+        self.assertEquals(log[r3], {'F': {}})
 
         log = td1.log(path=('a',))
-        self.assertEquals(log.keys(), [BaseRevision, r2])
-        self.assertEquals(log[BaseRevision], {})
-        self.assertEquals(log[r2], {'a': 1})
+        self.assertEquals(log.keys(), [r1, r3])
+        self.assertEquals(log[r1], {})
+        self.assertEquals(log[r3], {'a': 1})
+
+    def test_log_no_revisions(self):
+        d1 = {"A": {"B": {"C": 1, "D": [2, 3]}}}
+        td1 = TraceableDict(d1)
+
+        log = td1.log(path=("A",))
+        self.assertEquals(log.keys(), [])
 
     def test_log_uncommitted_changes(self):
-        r1 = 1
+        r1, r2 = 1, 2
         d1 = {"A": {"B": {"C": 1, "D": [2, 3], "E": 4}}}
         d2 = {"A": {"B": {"C": 1, "D": [2], "F": 5}}}
 
         td1 = TraceableDict(d1)
+        td1.commit(revision=r1)
         td2 = TraceableDict(d2)
+        td2.commit(revision=r1)
 
         td1 = td1 | td2
         self.assertTrue(td1.has_uncommitted_changes)
 
         log = td1.log(path=('A',))
-        self.assertEquals(log.keys(), [BaseRevision])
-        self.assertEquals(log[BaseRevision], d1)
+        self.assertEquals(log.keys(), [r1])
+        self.assertEquals(log[r1], d1)
 
-        td1.commit(revision=r1)
+        td1.commit(revision=r2)
         self.assertFalse(td1.has_uncommitted_changes)
 
         log = td1.log(path=('A',))
-        self.assertEquals(log.keys(), [BaseRevision, r1])
-        self.assertEquals(log[BaseRevision], d1)
-        self.assertEquals(log[r1], d2)
+        self.assertEquals(log.keys(), [r1, r2])
+        self.assertEquals(log[r1], d1)
+        self.assertEquals(log[r2], d2)
 
     def test_log_invalid_path(self):
         r1 = 1
@@ -789,8 +892,8 @@ class LogTests(unittest.TestCase):
 
         unknown_path = ('A', 'B')
         log = td1.log(path=unknown_path)
-        self.assertEquals(log.keys(), [0])
-        self.assertEquals(log[0], {'B': {}})
+        self.assertEquals(log.keys(), [r1])
+        self.assertEquals(log[r1], {'B': {}})
 
 
 if __name__ == '__main__':

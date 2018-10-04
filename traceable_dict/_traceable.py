@@ -7,9 +7,6 @@ from _utils import nested_getitem, nested_setitem, nested_pop
 
 __all__ = []
 
-BaseRevision = 0
-__all__ += ['BaseRevision']
-
 _trace_key = '__trace__'
 _revisions_key = '__revisions__'
 
@@ -83,8 +80,11 @@ class TraceableDict(dict):
         # print 'child.__init__()'
         super(TraceableDict, self).__init__(*args, **kwargs)
         self.setdefault(_trace_key, {})
-        self.setdefault(_revisions_key, [BaseRevision])
+        self.setdefault(_revisions_key, [])
+        # TODO: handle init of dict with uncommitted changes
         self._has_uncommitted_changes = False
+        if not self.revisions:
+            self._has_uncommitted_changes = True
 
     def __or__(self, other):
         res = TraceableDict(self)
@@ -92,17 +92,14 @@ class TraceableDict(dict):
         return res
 
     def commit(self, revision):
-        if revision is None:
-            raise ValueError("revision cannot be None")
-
         if not self.has_uncommitted_changes:
             warnings.warn("nothing to commit")
             return
 
-        if revision == BaseRevision:
-            raise ValueError("cannot commit to base revision")
+        if revision is None:
+            raise ValueError("revision cannot be None")
 
-        if revision < self.revisions[-1]:
+        if self.revisions and (revision <= self.revisions[-1]):
             raise ValueError("cannot commit to earlier revision")
 
         trace = {}
@@ -118,7 +115,7 @@ class TraceableDict(dict):
             self[_revisions_key].append(revision)
 
     def revert(self):
-        if self.has_uncommitted_changes:
+        if self.revisions and self.has_uncommitted_changes:
             result = self._checkout(self.revisions[-1])
 
             super(TraceableDict, self).clear()
@@ -129,6 +126,8 @@ class TraceableDict(dict):
             self._has_uncommitted_changes = False
 
     def checkout(self, revision):
+        if not self.revisions:
+            raise Exception("no versions available. you must commit the initiate revision first.")
         if self._has_uncommitted_changes:
             raise Exception("dictionary has uncommitted changes. you must commit or revert first.")
         return self._checkout(revision)
@@ -161,6 +160,9 @@ class TraceableDict(dict):
         return self._has_uncommitted_changes
 
     def update_trace(self, trace):
+        if not self.revisions:
+            return
+
         trace_dict = self._copy_trace()
         for path, v, type_ in trace:
             trace_dict.setdefault(path, [])
@@ -210,6 +212,7 @@ class TraceableDict(dict):
         result = TraceableDict(dict_)
         result[_trace_key] = trace
         result[_revisions_key] = revisions
+        result._has_uncommitted_changes= False
         return result
 
     def _augment(self, path):
@@ -220,7 +223,7 @@ class TraceableDict(dict):
             raise TypeError("path must be tuple")
 
         trace_aug = {}
-        revisions_aug = set()
+        revisions_aug = set([self.revisions[0]]) if self.revisions else set()
 
         for k in self.trace.keys():
             if path == k[1: len(path) + 1]:

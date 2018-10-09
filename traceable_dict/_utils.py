@@ -8,6 +8,11 @@ root = '_root_'
 __all__ += [root]
 
 
+uncommitted = '_uncommitted_'
+
+__all__ += [uncommitted]
+
+
 class KeyEvent(object):
     """
     Describes general key event
@@ -91,16 +96,3 @@ def nested_getitem(d, nested_k):
 
 
 __all__ += ['nested_getitem']
-
-
-def parse_tuple(value):
-    try:
-        t = ast.literal_eval(value)
-        if type(t) != tuple:
-            raise ValueError('failed to parse tuple')
-        return t
-    except:
-        return
-
-
-__all__ += ['parse_tuple']

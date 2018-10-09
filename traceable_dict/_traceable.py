@@ -2,14 +2,13 @@ import copy
 import warnings
 
 from _meta import TraceableMeta
-from _utils import key_added, key_removed, key_updated, root
-from _utils import nested_getitem, nested_setitem, nested_pop, parse_tuple
+from _utils import key_added, key_removed, key_updated, root, uncommitted
+from _utils import nested_getitem, nested_setitem, nested_pop
 
 __all__ = []
 
 _trace_key = '__trace__'
 _revisions_key = '__revisions__'
-_uncommitted_key = '__uncommitted__'
 
 _keys = [_trace_key, _revisions_key]
 
@@ -82,7 +81,7 @@ class TraceableDict(dict):
             raise ValueError("cannot commit to earlier revision")
 
         if self.trace:
-            self[_trace_key][str(revision)] = self[_trace_key].pop(_uncommitted_key)
+            self[_trace_key][str(revision)] = self[_trace_key].pop(uncommitted)
 
         self._has_uncommitted_changes = False
         if revision not in self.revisions:
@@ -90,7 +89,7 @@ class TraceableDict(dict):
 
     def revert(self):
         if self.revisions and self.has_uncommitted_changes:
-            self[_trace_key].pop(_uncommitted_key)
+            self[_trace_key].pop(uncommitted)
 
     def checkout(self, revision):
         if not self.revisions:
@@ -130,8 +129,8 @@ class TraceableDict(dict):
         if not self.revisions:
             return
 
-        self[_trace_key].setdefault(_uncommitted_key, [])
-        self[_trace_key][_uncommitted_key].extend(trace)
+        self[_trace_key].setdefault(uncommitted, [])
+        self[_trace_key][uncommitted].extend(trace)
         self._has_uncommitted_changes = True
 
     def _copy_trace(self):

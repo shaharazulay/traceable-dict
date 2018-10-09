@@ -172,7 +172,7 @@ class TraceableDict(dict):
             trace.pop(uncommitted)
 
         for revision_ in self.revisions:
-            if revision_ <= revision:
+            if int(revision_) <= revision:
                 break
 
             events = self.trace[revision]

@@ -166,22 +166,25 @@ class TraceableDict(dict):
             key_updated: lambda d, k, v: nested_setitem(d, k, v)
         }
 
-        sorted_trace = sorted(self.trace.items(), key=lambda kv: kv[0], reverse=True)
-        for revision_, events in sorted_trace:
-            if (revision_ is not uncommitted) and (int(revision_) <= revision):
+        if self.has_uncommitted_changes:
+            _uncommitted = self.trace[uncommitted]
+            [_update_dict[type_](dict_, path, value) for path, value, type_ in _uncommitted]
+            trace.pop(uncommitted)
+
+        for revision_ in self.revisions:
+            if revision_ <= revision:
                 break
 
-            for path, value, type_ in events:
-                _update_dict[type_](dict_, path, value)
+            events = self.trace[revision]
+            [_update_dict[type_](dict_, path, value) for path, value, type_ in events]
 
             trace.pop(revision_)
-            if revision_ in self.revisions:
-                revisions.remove(int(revision_))
+            revisions.remove(int(revision_))
 
         result = TraceableDict(dict_)
         result[_trace_key] = trace
         result[_revisions_key] = revisions
-        result._has_uncommitted_changes= False
+        result._has_uncommitted_changes = False
         return result
 
     def _augment(self, path):

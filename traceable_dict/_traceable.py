@@ -172,14 +172,14 @@ class TraceableDict(dict):
             trace.pop(uncommitted)
 
         for revision_ in reversed(self.revisions):
-            if int(revision_) <= revision:
+            if revision_ <= revision:
                 break
 
-            events = self.trace[revision_]
+            events = self.trace[str(revision_)]
             [_update_dict[type_](dict_, path, value) for path, value, type_ in events]
 
-            trace.pop(revision_)
-            revisions.remove(int(revision_))
+            trace.pop(str(revision_))
+            revisions.remove(revision_)
 
         result = TraceableDict(dict_)
         result[_trace_key] = trace

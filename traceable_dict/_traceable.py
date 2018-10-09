@@ -9,6 +9,7 @@ __all__ = []
 
 _trace_key = '__trace__'
 _revisions_key = '__revisions__'
+_uncommitted_key = '__uncommitted__'
 
 _keys = [_trace_key, _revisions_key]
 
@@ -80,13 +81,20 @@ class TraceableDict(dict):
         if self.revisions and (revision <= self.revisions[-1]):
             raise ValueError("cannot commit to earlier revision")
 
-        trace = {}
-        for path, events in self.trace.iteritems():
-            trace.update({path: []})
-            for value, type_, rev in events:
-                _revision = rev if rev is not None else revision
-                trace[path].append((value, type_, _revision))
-        self[_trace_key] = trace
+        if self.trace:
+            self[_trace_key][str(revision)] = self[_trace_key].pop(_uncommitted_key)
+
+        # search key uncomitted
+
+        # trace = {}
+        # for path, events in self.trace.iteritems():
+        #     trace.update({path: []})
+        #     for value, type_, rev in events:
+        #         _revision = rev if rev is not None else revision
+        #         trace[path].append((value, type_, _revision))
+        # self[_trace_key] = trace
+        # self._has_uncommitted_changes = False
+
         self._has_uncommitted_changes = False
 
         if revision not in self.revisions:
@@ -94,14 +102,15 @@ class TraceableDict(dict):
 
     def revert(self):
         if self.revisions and self.has_uncommitted_changes:
-            result = self._checkout(self.revisions[-1])
-
-            super(TraceableDict, self).clear()
-            super(TraceableDict, self).__init__(result)
-
-            self[_trace_key] = result.trace
-            self[_revisions_key] = result.revisions
-            self._has_uncommitted_changes = False
+            self[_trace_key].pop(_uncommitted_key)
+            # result = self._checkout(self.revisions[-1])
+            #
+            # super(TraceableDict, self).clear()
+            # super(TraceableDict, self).__init__(result)
+            #
+            # self[_trace_key] = result.trace
+            # self[_revisions_key] = result.revisions
+            # self._has_uncommitted_changes = False
 
     def checkout(self, revision):
         if not self.revisions:
@@ -141,13 +150,24 @@ class TraceableDict(dict):
         if not self.revisions:
             return
 
-        trace_dict = self._copy_trace()
-        for path, v, type_ in trace:
-            str_path = str(path)
-            trace_dict.setdefault(str_path, [])
-            trace_dict[str_path].append((v, type_, None))
-        self[_trace_key] = trace_dict
+        #trace_dict = self._copy_trace()
+        self[_trace_key].setdefault(_uncommitted_key, [])
+        self[_trace_key][_uncommitted_key].extend(trace)
+        # for path, v, type_ in trace:
+        #     # str_path = str(path)
+        #     # trace_dict[_uncommitted_key].setdefault(str_path, [])
+        #     # trace_dict[_uncommitted_key][str_path].extend((v, type_))
+
+        #self[_trace_key] = trace_dict
         self._has_uncommitted_changes = True
+
+        # trace_dict = self._copy_trace()
+        # for path, v, type_ in trace:
+        #     str_path = str(path)
+        #     trace_dict.setdefault(str_path, [])
+        #     trace_dict[str_path].append((v, type_, None))
+        # self[_trace_key] = trace_dict
+        # self._has_uncommitted_changes = True
 
     def _copy_trace(self):
         return dict((k, v[:]) for k, v in self[_trace_key].iteritems())
@@ -175,18 +195,29 @@ class TraceableDict(dict):
             key_updated: lambda d, k, v: nested_setitem(d, k, v)
         }
 
-        for path, events in self.trace.iteritems():
-            for value, type_, rev in events[::-1]:
-                if (rev is not None) and (rev <= revision):
-                    break
+        # TODO: sort the trace keys (revisions)
+        for revision_, events in self.trace.iteritems():
+            if int(revision_) <= revision:
+                break
 
-                _update_dict[type_](dict_, parse_tuple(path), value)
-                trace[path].pop()
-                if rev in revisions:
-                    revisions.remove(rev)
+            for path, value, type_ in events:
+                _update_dict[type_](dict_, path, value)
 
-            if not trace[path]:
-                trace.pop(path)
+            trace.pop(revision_)
+            revisions.remove(int(revision_))
+
+        # for path, events in self.trace.iteritems():
+        #     for value, type_, rev in events[::-1]:
+        #         if (rev is not None) and (rev <= revision):
+        #             break
+        #
+        #         _update_dict[type_](dict_, parse_tuple(path), value)
+        #         trace[path].pop()
+        #         if rev in revisions:
+        #             revisions.remove(rev)
+        #
+        #     if not trace[path]:
+        #         trace.pop(path)
 
         result = TraceableDict(dict_)
         result[_trace_key] = trace

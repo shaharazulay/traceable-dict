@@ -175,7 +175,7 @@ class TraceableDict(dict):
             if int(revision_) <= revision:
                 break
 
-            events = self.trace[revision]
+            events = self.trace[revision_]
             [_update_dict[type_](dict_, path, value) for path, value, type_ in events]
 
             trace.pop(revision_)

@@ -89,7 +89,14 @@ class TraceableDict(dict):
 
     def revert(self):
         if self.revisions and self.has_uncommitted_changes:
-            self[_trace_key].pop(uncommitted)
+            result = self._checkout(self.revisions[-1])
+
+            super(TraceableDict, self).clear()
+            super(TraceableDict, self).__init__(result)
+
+            self[_trace_key] = result.trace
+            self[_revisions_key] = result.revisions
+            self._has_uncommitted_changes = False
 
     def checkout(self, revision):
         if not self.revisions:
@@ -159,16 +166,17 @@ class TraceableDict(dict):
             key_updated: lambda d, k, v: nested_setitem(d, k, v)
         }
 
-        # TODO: sort the trace keys (revisions)
-        for revision_, events in self.trace.iteritems():
-            if int(revision_) <= revision:
+        sorted_trace = sorted(self.trace.items(), key=lambda kv: kv[0], reverse=True)
+        for revision_, events in sorted_trace:
+            if (revision_ is not uncommitted) and (int(revision_) <= revision):
                 break
 
             for path, value, type_ in events:
                 _update_dict[type_](dict_, path, value)
 
             trace.pop(revision_)
-            revisions.remove(int(revision_))
+            if revision_ in self.revisions:
+                revisions.remove(int(revision_))
 
         result = TraceableDict(dict_)
         result[_trace_key] = trace

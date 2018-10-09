@@ -218,7 +218,7 @@ class TraceableTest(unittest.TestCase):
 
         self.assertEquals(
             D1.trace,
-            {str(r2): [(('_root_', 'new_key'), None, '_A_')]})
+            {str(r2): [((root, 'new_key'), None, key_added)]})
 
         D1.pop('new_key')
         D1.commit(revision=r3)
@@ -229,8 +229,8 @@ class TraceableTest(unittest.TestCase):
 
         self.assertEquals(
             D1.trace,
-            {"2": {"('_root_', 'new_key')": [None, '_A_']},
-             "3": {"('_root_', 'new_key')": ['new_val', '_R_']}})
+            {'2': [((root, 'new_key'), None, key_added)],
+             '3': [((root, 'new_key'), 'new_val', key_removed)]})
 
     def test_new_traceable(self):
         r1, r2 = 1, 2
@@ -304,103 +304,103 @@ class TraceableTest(unittest.TestCase):
         self.assertEquals(result_base.freeze, D1_Base.freeze)
         self.assertEquals(result_base.revisions, [r1])
 
-    # def test_pipe_immutable(self):
-    #     d1 = self._d1.copy()
-    #     d2 = d1.copy()
-    #     d2['new_key'] = 'new_val'
-    #
-    #     D1 = TraceableDict(d1)
-    #     self.assertEquals(d1, D1.freeze)
-    #
-    #     D2 = TraceableDict(d2)
-    #
-    #     D1_before = D1.copy()
-    #     D1_tag = D1 | D2
-    #     D1_tag.commit(revision=1)
-    #     self.assertEquals(d2, D1_tag.freeze)
-    #
-    #     self.assertEquals(d1, D1.freeze)
-    #     self.assertFalse(D1.trace)
-    #     self.assertEquals(D1, D1_before)
-    #
-    # def test_pipe_operator(self):
-    #     r1, r2, r3 = 1, 2, 3
-    #
-    #     d1 = self._d1.copy()
-    #     d2 = d1.copy()
-    #     d2['new_key'] = 'new_val'
-    #
-    #     D1 = TraceableDict(d1)
-    #     self.assertEquals(d1, D1.freeze)
-    #
-    #     D2 = TraceableDict(d2)
-    #     D2.commit(revision=r2)
-    #     self.assertEquals(d2, D2.freeze)
-    #
-    #     D1 = D1 | D2
-    #     D1.commit(revision=r1)
-    #     self.assertEquals(d2, D1.freeze)
-    #
-    #     self.assertEquals(D1.trace, {})
-    #
-    #     D1['new_key'] = 'updated_value'
-    #     D1.commit(revision=r2)
-    #     self.assertEquals(
-    #         D1.trace,
-    #         {"('%s', 'new_key')" % root: [('new_val', key_updated, r2)]})
-    #
-    #     D3 = TraceableDict(d1)
-    #
-    #     D2 = D2 | D3
-    #     D2.commit(revision=r3)
-    #     self.assertEquals(d1, D2.freeze)
-    #
-    #     self.assertEquals(
-    #         D2.trace,
-    #         {"('%s', 'new_key')" % root : [('new_val', key_removed, r3)]})
-    #
-    # def test_pipe_operator_multiple(self):
-    #     r1, r2 = 1, 2
-    #     d1 = self._d1.copy()
-    #     d2 = d1.copy()
-    #     d2['new_key'] = 'new_val'
-    #
-    #     D1 = TraceableDict(d2)
-    #     D1.commit(revision=r1)
-    #     D2 = TraceableDict(d1)
-    #     D2.commit(revision=r1)
-    #     D3 = TraceableDict(d2)
-    #     D3.commit(revision=r1)
-    #
-    #     D4 = D1 | D2 | D3
-    #     D4.commit(revision=r2)
-    #     self.assertEquals(d2, D4.freeze)
-    #
-    #     trace = D4.trace["('%s', 'new_key')" % root]
-    #     self.assertIn(
-    #         ('new_val', key_removed, r2),
-    #         trace)
-    #     self.assertIn(
-    #         (None, key_added, r2),
-    #         trace)
-    #
-    # def test_init_traceable_dict(self):
-    #     r1, r2 = int((time.time()*1) * 1000), int((time.time()*2) * 1000)
-    #
-    #     td1 = TraceableDict({'a': 1, 'b':2})
-    #     td1.commit(revision=r1)
-    #
-    #     td1['a'] = 8
-    #     td1.commit(revision=r2)
-    #
-    #     self.assertEquals(td1.freeze, {'a': 8, 'b': 2})
-    #     self.assertEquals(td1.trace, {"('%s', 'a')" % root: [(1, key_updated, r2)]})
-    #     self.assertEquals(td1.revisions, [r1, r2])
-    #
-    #     td2 = TraceableDict(td1)
-    #     self.assertEquals(td2.freeze, td1.freeze)
-    #     self.assertEquals(td2.trace, td1.trace)
-    #     self.assertEquals(td2.revisions, td1.revisions)
+    def test_pipe_immutable(self):
+        d1 = self._d1.copy()
+        d2 = d1.copy()
+        d2['new_key'] = 'new_val'
+
+        D1 = TraceableDict(d1)
+        self.assertEquals(d1, D1.freeze)
+
+        D2 = TraceableDict(d2)
+
+        D1_before = D1.copy()
+        D1_tag = D1 | D2
+        D1_tag.commit(revision=1)
+        self.assertEquals(d2, D1_tag.freeze)
+
+        self.assertEquals(d1, D1.freeze)
+        self.assertFalse(D1.trace)
+        self.assertEquals(D1, D1_before)
+
+    def test_pipe_operator(self):
+        r1, r2, r3 = 1, 2, 3
+
+        d1 = self._d1.copy()
+        d2 = d1.copy()
+        d2['new_key'] = 'new_val'
+
+        D1 = TraceableDict(d1)
+        self.assertEquals(d1, D1.freeze)
+
+        D2 = TraceableDict(d2)
+        D2.commit(revision=r2)
+        self.assertEquals(d2, D2.freeze)
+
+        D1 = D1 | D2
+        D1.commit(revision=r1)
+        self.assertEquals(d2, D1.freeze)
+
+        self.assertEquals(D1.trace, {})
+
+        D1['new_key'] = 'updated_value'
+        D1.commit(revision=r2)
+        self.assertEquals(
+            D1.trace,
+            {str(r2): [((root, 'new_key'), 'new_val', key_updated)]})
+
+        D3 = TraceableDict(d1)
+
+        D2 = D2 | D3
+        D2.commit(revision=r3)
+        self.assertEquals(d1, D2.freeze)
+
+        self.assertEquals(
+            D2.trace,
+            {str(r3): [((root, 'new_key'), 'new_val', key_removed)]})
+
+    def test_pipe_operator_multiple(self):
+        r1, r2 = 1, 2
+        d1 = self._d1.copy()
+        d2 = d1.copy()
+        d2['new_key'] = 'new_val'
+
+        D1 = TraceableDict(d2)
+        D1.commit(revision=r1)
+        D2 = TraceableDict(d1)
+        D2.commit(revision=r1)
+        D3 = TraceableDict(d2)
+        D3.commit(revision=r1)
+
+        D4 = D1 | D2 | D3
+        D4.commit(revision=r2)
+        self.assertEquals(d2, D4.freeze)
+
+        trace = D4.trace[str(r2)]
+        self.assertIn(
+            ((root, 'new_key'), 'new_val', key_removed),
+            trace)
+        self.assertIn(
+            ((root, 'new_key'), None, key_added),
+            trace)
+
+    def test_init_traceable_dict(self):
+        r1, r2 = int((time.time()*1) * 1000), int((time.time()*2) * 1000)
+
+        td1 = TraceableDict({'a': 1, 'b':2})
+        td1.commit(revision=r1)
+
+        td1['a'] = 8
+        td1.commit(revision=r2)
+
+        self.assertEquals(td1.freeze, {'a': 8, 'b': 2})
+        self.assertEquals(td1.trace, {str(r2): [(('_root_', 'a'), 1, key_updated)]})
+        self.assertEquals(td1.revisions, [r1, r2])
+
+        td2 = TraceableDict(td1)
+        self.assertEquals(td2.freeze, td1.freeze)
+        self.assertEquals(td2.trace, td1.trace)
+        self.assertEquals(td2.revisions, td1.revisions)
 
 
 # class CommitTest(unittest.TestCase):

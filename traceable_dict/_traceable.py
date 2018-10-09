@@ -171,7 +171,7 @@ class TraceableDict(dict):
             [_update_dict[type_](dict_, path, value) for path, value, type_ in _uncommitted]
             trace.pop(uncommitted)
 
-        for revision_ in self.revisions:
+        for revision_ in reversed(self.revisions):
             if int(revision_) <= revision:
                 break
 

@@ -123,7 +123,7 @@ class TraceableDict(dict):
         if path is not None:
             d = self._augment(path)
 
-        if revision == self.revisions[0]:
+        if revision == d.revisions[0]:
             return d.freeze
 
         if revision is None:
@@ -138,6 +138,7 @@ class TraceableDict(dict):
             events = d.trace[str(revision)]
             d = d._checkout(revision=revision)
 
+        d = copy.deepcopy(d.freeze)
 
         for event in events:
             _path, value_before, type_ = event
@@ -150,7 +151,7 @@ class TraceableDict(dict):
             if type_ == key_updated:
                 nested_setitem(d, _path, '---------' + str(value_before) + ' +++++++++' + str(value))
 
-        return d.freeze
+        return d
 
     @property
     def freeze(self):
@@ -246,7 +247,8 @@ class TraceableDict(dict):
 
             if events_aug:
                 trace_aug[str(revision)] = events_aug
-                revisions_aug.append(revision if revision == uncommitted else int(revision))
+                if revision != uncommitted:
+                    revisions_aug.append(int(revision))
 
         result = TraceableDict({path[-1]: nested_getitem(self, path)})
         result[_trace_key] = trace_aug

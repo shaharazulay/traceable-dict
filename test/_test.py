@@ -459,7 +459,7 @@ class CommitTest(unittest.TestCase):
         self.assertEquals({}, td1.trace)
         self.assertFalse(td1.has_uncommitted_changes)
 
-    def test_commit_none_revision(self):
+    def test_commit_invalid_revision(self):
         d1 = {"a": "aa", "b":"bb"}
         td1 = TraceableDict(d1)
         self.assertEquals([], td1.revisions)
@@ -469,6 +469,14 @@ class CommitTest(unittest.TestCase):
             td1.commit(revision=None)
 
         self.assertTrue('revision cannot be None' in err.exception)
+        self.assertTrue(td1.has_uncommitted_changes)
+        self.assertEquals(td1.trace, {})
+        self.assertEquals(td1.revisions, [])
+
+        with self.assertRaises(ValueError) as err:
+            td1.commit(revision='invalid')
+
+        self.assertTrue('revision must be an integer' in err.exception)
         self.assertTrue(td1.has_uncommitted_changes)
         self.assertEquals(td1.trace, {})
         self.assertEquals(td1.revisions, [])
@@ -580,8 +588,8 @@ class RevertTest(unittest.TestCase):
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals(td1.freeze, {"a": 1, "b": 2})
         self.assertEquals(td1.trace, {
-            "('%s', 'b')" % root: [('bb', key_updated, 2)],
-            "('%s', 'a')" % root: [("aa", key_updated, 1)]})
+            str(r1): [((root, 'a'), 'aa', key_updated)],
+            str(r2): [((root, 'b'), 'bb', key_updated)]})
         self.assertEquals([base_revision, r1, r2], td1.revisions)
 
     def test_revert_no_revisions(self):
@@ -645,7 +653,7 @@ class RevertTest(unittest.TestCase):
         td1["a"] = 1
         td1.commit(revision=r2)
 
-        _trace = {"('%s', 'a')" % root: [('aa', key_updated, r2)]}
+        _trace = {str(r2): [((root, 'a'), 'aa', key_updated)]}
 
         self.assertEquals([r1, r2], td1.revisions)
         self.assertEquals(td1.freeze, {"a": 1, "b": "bb"})

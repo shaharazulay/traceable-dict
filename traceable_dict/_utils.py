@@ -24,7 +24,7 @@ class KeyAdded(KeyEvent):
     Indicates the key was added
     """
     def __repr__(self):
-        return "_A_"
+        return "__a__"
 
 key_added = repr(KeyAdded())
 __all__ += ['key_added']
@@ -35,7 +35,7 @@ class KeyRemoved(KeyEvent):
     Indicates the key was removed
     """
     def __repr__(self):
-        return "_R_"
+        return "__r__"
 
 key_removed = repr(KeyRemoved())
 __all__ += ['key_removed']
@@ -46,7 +46,7 @@ class KeyUpdated(KeyEvent):
     Indicates the key-value pair was updated
     """
     def __repr__(self):
-        return "_U_"
+        return "__u__"
 
 key_updated = repr(KeyUpdated())
 __all__ += ['key_updated']

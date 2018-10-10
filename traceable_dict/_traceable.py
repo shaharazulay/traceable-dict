@@ -116,19 +116,41 @@ class TraceableDict(dict):
         return result
 
     def diff(self, revision=None, path=None):
+        if not self.revisions:
+            return
+
         d = self
         if path is not None:
             d = self._augment(path)
+
+        if revision == self.revisions[0]:
+            return d.freeze
 
         if revision is None:
             if not d.has_uncommitted_changes:
                 return
             revision = uncommitted
+            events = d.trace[str(revision)]
 
-        elif revision not in d.revisions:
-            raise ValueError("unknown revision %s" % revision)
+        else:
+            if revision not in d.revisions:
+                raise ValueError("unknown revision %s" % revision)
+            events = d.trace[str(revision)]
+            d = d._checkout(revision=revision)
 
-        return d.trace[str(revision)]
+
+        for event in events:
+            _path, value_before, type_ = event
+            value = nested_getitem(d, _path)
+
+            if type_ == key_added:
+                nested_setitem(d, _path, '+++++++++' + str(value))
+            if type_ == key_removed:
+                nested_setitem(d, _path, '---------' + str(value_before))
+            if type_ == key_updated:
+                nested_setitem(d, _path, '---------' + str(value_before) + ' +++++++++' + str(value))
+
+        return d.freeze
 
     @property
     def freeze(self):
@@ -212,7 +234,7 @@ class TraceableDict(dict):
         trace_aug = {}
         revisions_aug = [self.revisions[0]] if self.revisions else []
 
-        for revision in self.revisions[1:]:
+        for revision in self.trace.keys():
 
             events_aug = []
             for event in self.trace[str(revision)]:
@@ -224,7 +246,7 @@ class TraceableDict(dict):
 
             if events_aug:
                 trace_aug[str(revision)] = events_aug
-                revisions_aug.append(revision)
+                revisions_aug.append(revision if revision == uncommitted else int(revision))
 
         result = TraceableDict({path[-1]: nested_getitem(self, path)})
         result[_trace_key] = trace_aug

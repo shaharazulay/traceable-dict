@@ -100,7 +100,7 @@ class TraceableDict(dict):
 
     def checkout(self, revision):
         if not self.revisions:
-            raise Exception("no versions available. you must commit the initiate revision first.")
+            raise Exception("no revisions available. you must commit an initial revision first.")
         if self._has_uncommitted_changes:
             raise Exception("dictionary has uncommitted changes. you must commit or revert first.")
         return self._checkout(revision)
@@ -114,6 +114,21 @@ class TraceableDict(dict):
             print 'changeset:   %s' % revision
             print 'value:       %s\n\n' % value
         return result
+
+    def diff(self, revision=None, path=None):
+        d = self
+        if path is not None:
+            d = self._augment(path)
+
+        if revision is None:
+            if not d.has_uncommitted_changes:
+                return
+            revision = uncommitted
+
+        elif revision not in d.revisions:
+            raise ValueError("unknown revision %s" % revision)
+
+        return d.trace[str(revision)]
 
     @property
     def freeze(self):
@@ -195,19 +210,26 @@ class TraceableDict(dict):
             raise TypeError("path must be tuple")
 
         trace_aug = {}
-        revisions_aug = set([self.revisions[0]]) if self.revisions else set()
+        revisions_aug = [self.revisions[0]] if self.revisions else []
 
-        for str_path in self.trace.keys():
-            _path = parse_tuple(str_path)
-            if path == _path[1: len(path) + 1]:
-                k_aug = (root, ) + tuple(_path[len(path):])
-                trace_aug[str(k_aug)] = self.trace[str_path]
-                [revisions_aug.add(event[-1]) for event in self.trace[str_path] if event[-1] is not None]
+        for revision in self.revisions[1:]:
+
+            events_aug = []
+            for event in self.trace[str(revision)]:
+                _path, value, type_ = event
+
+                if path == _path[1: len(path) + 1]:
+                    path_aug = (root, ) + tuple(_path[len(path):])
+                    events_aug.append((path_aug, value, type_))
+
+            if events_aug:
+                trace_aug[str(revision)] = events_aug
+                revisions_aug.append(revision)
 
         result = TraceableDict({path[-1]: nested_getitem(self, path)})
         result[_trace_key] = trace_aug
-        result._has_uncommitted_changes = any([v for v in values if v[-1] is None] for values in trace_aug.values())
-        result[_revisions_key].extend(list(revisions_aug))
+        result._has_uncommitted_changes = (uncommitted in trace_aug.keys())
+        result[_revisions_key] = revisions_aug
         return result
 
 __all__ += ['TraceableDict']

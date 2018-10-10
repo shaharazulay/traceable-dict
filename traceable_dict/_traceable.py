@@ -170,7 +170,8 @@ class TraceableDict(dict):
         self[_revisions_key] = revisions
 
     def _checkout(self, revision):
-
+        if type(revision) != int:
+            raise ValueError("revision must be an integer")
         if revision not in self.revisions:
             raise ValueError("unknown revision %s" % revision)
 

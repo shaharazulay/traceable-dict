@@ -26,9 +26,9 @@ class TraceableMeta(type):
     def wrapper(self, func):
         def wrapped(self, *args, **kwargs):
             # print 'wrapper.__call__(): ', func.__name__
-            before = self.freeze
+            before = self.as_dict()
             res = func(self, *args, **kwargs)
-            after = self.freeze
+            after = self.as_dict()
             
             trace = DictDiff.find_diff(before, after)
             if len(trace) > 0:

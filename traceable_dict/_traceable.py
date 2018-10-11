@@ -112,7 +112,7 @@ class TraceableDict(dict):
         d_augmented = self._augment(path)
         result = {}
         for revision in d_augmented.revisions:
-            value = d_augmented._checkout(revision=revision).freeze
+            value = d_augmented._checkout(revision=revision).as_dict()
             result.update({revision: value})
             print 'changeset:   %s' % revision
             print 'value:       %s\n\n' % value
@@ -156,8 +156,7 @@ class TraceableDict(dict):
 
         return d
 
-    @property
-    def freeze(self):
+    def as_dict(self):
         frozen = dict(self)
         return dict((k, frozen[k]) for k in frozen if k not in _keys)
 
@@ -197,7 +196,7 @@ class TraceableDict(dict):
 
         revisions = list(self.revisions)
         trace = copy.deepcopy(self.trace)
-        dict_ = copy.deepcopy(self.freeze)
+        dict_ = copy.deepcopy(self.as_dict())
 
         _update_dict = {
             key_added: lambda d, k, v: nested_pop(d, k),

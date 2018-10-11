@@ -156,6 +156,15 @@ class TraceableDict(dict):
 
         return d
 
+    def remove_oldest_revision(self):
+        if len(self.revisions) <= 1:
+            return
+
+        self[_revisions_key].pop(0)
+
+        base_revision = str(self.revisions[0])
+        self[_trace_key].pop(base_revision)
+
     def as_dict(self):
         frozen = dict(self)
         return dict((k, frozen[k]) for k in frozen if k not in _keys)

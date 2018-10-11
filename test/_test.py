@@ -934,5 +934,127 @@ class DiffTests(unittest.TestCase):
         raise NotImplementedError
 
 
+class RemoveTests(unittest.TestCase):
+
+    def test_basic(self):
+        r1, r2, r3, r4, r5 = 1, 2, 3, 4, 5
+
+        d1 = {"a": "aa", "b":"bb"}
+        d2 = {"a": "a", "b":"bb"}
+        d3 = {"a": "a", "b":"b"}
+        d4 = {"a": "a"}
+        d5 = {"aa": "aa", "bb":"bb", "c":"c"}
+
+        td1 = TraceableDict(d1)
+        td1.commit(revision=r1)
+        self.assertEquals(td1.as_dict(), d1)
+
+        td1 = td1 | d2
+        td1.commit(revision=r2)
+        self.assertEquals(td1.as_dict(), d2)
+
+        td1 = td1 | d3
+        td1.commit(revision=r3)
+        self.assertEquals(td1.as_dict(), d3)
+
+        td1 = td1 | d4
+        td1.commit(revision=r4)
+        self.assertEquals(td1.as_dict(), d4)
+
+        td1 = td1 | d5
+        td1.commit(revision=r5)
+        self.assertEquals(td1.as_dict(), d5)
+
+        self.assertEquals(td1.revisions, [r1, r2, r3, r4, r5])
+
+        td1.remove_oldest_revision()
+
+        self.assertEquals(td1.as_dict(), d5)
+        self.assertEquals(td1.revisions, [r2, r3, r4, r5])
+        self.assertEquals(set(td1.trace.keys()), set([str(r3), str(r4), str(r5)]))
+
+        td1.remove_oldest_revision()
+
+        self.assertEquals(td1.as_dict(), d5)
+        self.assertEquals(td1.revisions, [r3, r4, r5])
+        self.assertEquals(set(td1.trace.keys()), set([str(r4), str(r5)]))
+
+    def test_remove_no_revisions(self):
+        d1 = {"a": "aa", "b":"bb"}
+
+        td1 = TraceableDict(d1)
+        self.assertEquals(td1.as_dict(), d1)
+        self.assertEquals(td1.trace, {})
+        self.assertEquals(td1.revisions, [])
+
+        td1.remove_oldest_revision()
+
+        self.assertEquals(td1.as_dict(), d1)
+        self.assertEquals(td1.trace, {})
+        self.assertEquals(td1.revisions, [])
+
+    def test_remove_base_revision(self):
+        r1, r2= 1, 2
+
+        d1 = {"a": "aa", "b":"bb"}
+        d2 = {"a": "a", "b":"bb"}
+
+        td1 = TraceableDict(d1)
+        td1.commit(revision=r1)
+        self.assertEquals(td1.as_dict(), d1)
+
+        td1 = td1 | d2
+        td1.commit(revision=r2)
+        self.assertEquals(td1.as_dict(), d2)
+
+        self.assertEquals(td1.revisions, [r1, r2])
+
+        td1.remove_oldest_revision()
+
+        self.assertEquals(td1.as_dict(), d2)
+        self.assertEquals(td1.revisions, [r2])
+        self.assertEquals(td1.trace, {})
+
+    def test_remove_uncommitted_changes(self):
+        r1, r2 = 1, 2
+
+        d1 = {"a": "aa", "b":"bb"}
+        d2 = {"a": "a", "b":"bb"}
+        d3 = {"a": "a", "b":"b"}
+
+        td1 = TraceableDict(d1)
+        td1.commit(revision=r1)
+        self.assertEquals(td1.as_dict(), d1)
+
+        td1 = td1 | d2
+        td1.commit(revision=r2)
+        self.assertEquals(td1.as_dict(), d2)
+
+        td1 = td1 | d3
+        self.assertEquals(td1.as_dict(), d3)
+        self.assertTrue(td1.has_uncommitted_changes)
+
+        self.assertEquals(td1.revisions, [r1, r2])
+        self.assertEquals(set(td1.trace.keys()), set([str(r2), uncommitted]))
+
+        td1.remove_oldest_revision()
+
+        self.assertEquals(td1.as_dict(), d3)
+        self.assertEquals(td1.revisions, [r2])
+        self.assertEquals(set(td1.trace.keys()), set([uncommitted]))
+
+        td1.remove_oldest_revision()
+
+        self.assertEquals(td1.as_dict(), d3)
+        self.assertEquals(td1.revisions, [r2])
+        self.assertEquals(set(td1.trace.keys()), set([uncommitted]))
+
+        td1.revert()
+
+        self.assertEquals(td1.as_dict(), d2)
+        self.assertEquals(td1.revisions, [r2])
+        self.assertEquals(td1.trace, {})
+
+
 if __name__ == '__main__':
     unittest.main()

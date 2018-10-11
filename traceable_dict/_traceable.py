@@ -181,9 +181,6 @@ class TraceableDict(dict):
         self[_trace_key][uncommitted].extend(trace)
         self._has_uncommitted_changes = True
 
-    def _copy_trace(self):
-        return dict((k, v[:]) for k, v in self[_trace_key].iteritems())
-
     def _update(self, other):
         trace = self.trace
         revisions = self.revisions
@@ -199,7 +196,7 @@ class TraceableDict(dict):
             raise ValueError("unknown revision %s" % revision)
 
         revisions = list(self.revisions)
-        trace = self._copy_trace()
+        trace = copy.deepcopy(self.trace)
         dict_ = copy.deepcopy(self.freeze)
 
         _update_dict = {
@@ -230,17 +227,15 @@ class TraceableDict(dict):
         return result
 
     def _augment(self, path):
-        if path is None:
-            raise ValueError("path cannot be None")
-
         if not isinstance(path, tuple):
             raise TypeError("path must be tuple")
+        if len(path) == 0:
+            raise ValueError("path cannot be empty")
 
         trace_aug = {}
         revisions_aug = [self.revisions[0]] if self.revisions else []
 
         for revision in self.trace.keys():
-
             events_aug = []
             for event in self.trace[str(revision)]:
                 _path, value, type_ = event
@@ -257,7 +252,7 @@ class TraceableDict(dict):
         result = TraceableDict({path[-1]: nested_getitem(self, path)})
         result[_trace_key] = trace_aug
         result._has_uncommitted_changes = (uncommitted in trace_aug.keys())
-        result[_revisions_key] = revisions_aug
+        result[_revisions_key] = sorted(revisions_aug)
         return result
 
 __all__ += ['TraceableDict']

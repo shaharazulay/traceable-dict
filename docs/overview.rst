@@ -1,22 +1,25 @@
 General Idea
 -----
 
-Stacking (sometimes called stacked generalization or bagging) is an ensemble meta-algorithm that attempts to improve a model's
-predictive power by harnessing multiple models (perferably different in nature) to a unified pipeline.
+Often a Python dictionary object is used to represent a pre-known structured data that captures some state of a system.
+A non-relational database such as MongoDB is a great example of such use-case, where the BSON-based documents can easily be loaded into a Python dictionary.
+Those dict-like documents help store complex information, whose structure may change over time, and are highly common in the industry.
 
-The Stacking method is a very general name that is sometimes used to describe different methods to crete the unfied pipeline.
-Here, we focus on a Stacking ensemble which uses the multiple models predict the target, while unifing them using a 
-meta-level regressor - which learns how to annotate proper weights to the predictions of the models under it.
+In cases where the dictionary or JSON-like structure represents a meaningful state of a system, tracing it changes may be a highly valueble part in the monitoring of the system.
 
-A simpler type of Stacking might have been to average the predictions of the different models (similar to Random Forest, 
-but perhaps without the limitation of a single-type model).
+This module implements a traceable Python dictionary, that stores change history in an efficient way inside the object.
+It allows the user to:
 
-In true Stacking the "stacker" or the meta-level regressor can also perform learning, where models which are proven to be
-less efficient in predicting the data are provided lower weight in the final prediction.
+1. **Trace reverions** of the dictionary's content and structure.
+2. **Roll the dictionary back** to previously stored values.
+3. **Trace the changes** between its different revisions.
+4. **Revert** unwanted changes made.
+5. **Provide a meaningful id** to the revisions - such as a timestamp, or verison number.
+6. More....
 
-.. image:: _static/figure_001.jpg
+.. image:: _static/diff_example.jpg
 
-*[1] high-level description of the stacking ensemble*
+*[1] tracing the changes in a JSON-like object*
 
 
 

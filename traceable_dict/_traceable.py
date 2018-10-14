@@ -65,7 +65,6 @@ class TraceableDict(dict):
     __metaclass__ = TraceableMeta
 
     def __init__(self, *args, **kwargs):
-        # print 'child.__init__()'
         super(TraceableDict, self).__init__(*args, **kwargs)
         self.setdefault(_trace_key, {})
         self.setdefault(_revisions_key, [])
@@ -98,9 +97,12 @@ class TraceableDict(dict):
             >>> D1.as_dict()
             {'new_key': 'new_value', 'old_key': 'updated_value'}
             
-        Arguments:
-            other: A dictionary (or TraceableDict) that is the updated value of the original dict
+        Params:
+        -------
+            other: dict (or TraceableDict),
+                   The updated value of the original dict
         Returns:
+        -------
             TraceableDict object
         """
         res = TraceableDict(self)
@@ -108,6 +110,14 @@ class TraceableDict(dict):
         return res
 
     def commit(self, revision):
+        """
+        Commit the current changes into a new revision.
+            
+        Params:
+        -------
+            revision: int,
+                   The revision number to commit.
+        """
         if not self.has_uncommitted_changes:
             warnings.warn("nothing to commit")
             return
@@ -129,6 +139,9 @@ class TraceableDict(dict):
             self[_revisions_key].append(revision)
 
     def revert(self):
+        """
+        Revert un-commited changes (performed in-place on the current object).
+        """
         if self.revisions and self.has_uncommitted_changes:
             result = self._checkout(self.revisions[-1])
 
@@ -140,6 +153,17 @@ class TraceableDict(dict):
             self._has_uncommitted_changes = False
 
     def checkout(self, revision):
+        """
+        Update dict to a specific stored revision.
+            
+        Params:
+        -------
+            revision: int,
+                   The revision number to update to.
+        Returns:
+        -------
+            TraceableDict object
+        """
         if not self.revisions:
             raise Exception("no revisions available. you must commit an initial revision first.")
         if self._has_uncommitted_changes:
@@ -147,6 +171,18 @@ class TraceableDict(dict):
         return self._checkout(revision)
 
     def log(self, path):
+        """
+        Display the commit logs over the different revisions.
+            
+        Params:
+        -------
+            path: tuple,
+               The nested path inside the dictionary to follow.
+        Returns:
+        -------
+            result: dict, 
+                The log of dictionary values, per-revision.
+        """
         d_augmented = self._augment(path)
         result = {}
         for revision in d_augmented.revisions:
@@ -157,6 +193,17 @@ class TraceableDict(dict):
         return result
 
     def diff(self, revision=None, path=None):
+        """
+        Show changes between revisions, or latest revision and working tree.
+            
+        Params:
+        -------
+            revision: int,
+                   The revision number to observe (the difference will be measure between this revision
+                   and its previous revision).
+            path: tuple,
+               The nested path inside the dictionary to follow.
+        """
         if not self.revisions:
             return
 
@@ -195,6 +242,9 @@ class TraceableDict(dict):
         return d
 
     def remove_oldest_revision(self):
+        """
+        Removing the oldest revision of the traceable dict.
+        """
         if len(self.revisions) <= 1:
             return
 
@@ -204,6 +254,9 @@ class TraceableDict(dict):
         self[_trace_key].pop(base_revision)
 
     def as_dict(self):
+        """
+        Return the current dict represntation of the traceable dict.
+        """
         frozen = dict(self)
         return dict((k, frozen[k]) for k in frozen if k not in _keys)
 

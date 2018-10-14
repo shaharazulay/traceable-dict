@@ -127,7 +127,7 @@ class TraceableDict(dict):
             d = self._augment(path)
 
         if revision == d.revisions[0]:
-            return d.freeze
+            return d.as_dict()
 
         if revision is None:
             if not d.has_uncommitted_changes:
@@ -141,7 +141,7 @@ class TraceableDict(dict):
             events = d.trace[str(revision)]
             d = d._checkout(revision=revision)
 
-        d = copy.deepcopy(d.freeze)
+        d = copy.deepcopy(d.as_dict())
 
         for event in events:
             _path, value_before, type_ = event

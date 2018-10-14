@@ -6,7 +6,11 @@
    overview
   
 .. toctree::
-   :caption: Examples
+   :caption: Basic Examples
 
-   examples
+   basic_examples
   
+.. toctree::
+   :caption: Advanced Use Cases
+
+   advanced_examples

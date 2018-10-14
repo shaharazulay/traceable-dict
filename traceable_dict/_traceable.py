@@ -18,38 +18,48 @@ class TraceableDict(dict):
     A Traceable dictionary, that stores change history in an efficient way inside the object.
     
     Example:
-
+        >>> ## Create a traceable dictionary
         >>> from traceable_dict import TraceableDict
-        >>>
         >>> d1 = {'old_key': 'old_value'}
-        >>> d2 = d1.copy()
-        >>> d2['new_key'] = 'new_val'
-        >>>
         >>> D1 = TraceableDict(d1)
-        >>> D1.commit(revision=1)
-        >>> D2 = TraceableDict(d2)
-        >>> D2.commit(revision=1)
-        >>> D1 = D1 | d2
         >>> D1
-        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {"('_root_', 'new_key')": [(None, '_A_', None)]}, '__revisions__': [1]}
+        {'old_key': 'old_value', '__trace__': {}, '__revisions__': []}
+        >>> D1.revisions
+        []
+        >>>
+        >>> ## Commit the dictionary for the first time
         >>> D1.has_uncommitted_changes
         True
-        >>> D1.commit(revision=2)
+        >>>
+        >>> D1.commit(revision=1)
         >>> D1
-        {'old_key': 'old_value', 'new_key': 'new_val', '__trace__': {"('_root_', 'new_key')": [(None, '_A_', 2)]}, '__revisions__': [1, 2]}
+        {'old_key': 'old_value', '__trace__': {}, '__revisions__': [1]}
+        >>> D1.revisions
+        [1]
         >>> D1.has_uncommitted_changes
         False
         >>>
-        >>> D3 = TraceableDict(d1)
-        >>> D3.has_uncommitted_changes
+        >>> ## Update the dictionary while tracing the changes
+        >>> D1['new_key'] = 'new_val'
+        >>> D1.trace
+        {"('_root_', 'new_key')": [(None, '_A_', None)]}
+        >>> D1.has_uncommitted_changes
         True
-        >>> D3.revisions
-        []
-        >>> D4 = D1 | D3
-        >>> D4.commit(revision=3)
-        >>> D4
-        {'old_key': 'old_value', '__trace__': {"('_root_', 'new_key')": [(None, '_A_', 2), ('new_val', '_R_', 3)]}, '__revisions__': [1, 2, 3]}
-
+        >>> D1.commit(revision=2)
+        >>> D1.trace
+        {"('_root_', 'new_key')": [(None, '_A_', 2)]}
+        >>> D1.has_uncommitted_changes
+        False
+        >>> D1.revisions
+        [1, 2]
+        >>>
+        >>> ## Checkout previous revisions
+        >>> D1.as_dict()
+        {'old_key': 'old_value', 'new_key': 'new_value'}
+        >>>
+        >>> D_original = D1.checkout(revision=1)
+        >>> D_original.as_dict()
+        {'old_key': 'old_value'}
     """
 
     __metaclass__ = TraceableMeta
@@ -65,6 +75,34 @@ class TraceableDict(dict):
             self._has_uncommitted_changes = True
 
     def __or__(self, other):
+        """
+        Pipes one dictionary to another, in order to suggest that the first dictionary was updated
+        to the value of the second one.
+        This change is considered as a traceable change.
+        
+         Example:
+            >>> from traceable_dict import TraceableDict
+            >>> from traceable_dict._utils import key_removed, key_added, key_updated, root
+            >>>
+            >>> d1 = {'old_key': 'old_value'}
+            >>> D1 = TraceableDict(d1)
+            >>> D1
+            {'old_key': 'old_value', '__trace__': {}, '__revisions__': []}
+            >>>
+            >>> D1.commit(revision=1)
+            >>> D1.trace
+            {}
+            >>> d2 = {'old_key': 'updated_value', 'new_key': 'new_value'}
+            >>>
+            >>> D1 = D1 | d2
+            >>> D1.as_dict()
+            {'new_key': 'new_value', 'old_key': 'updated_value'}
+            
+        Arguments:
+            other: A dictionary (or TraceableDict) that is the updated value of the original dict
+        Returns:
+            TraceableDict object
+        """
         res = TraceableDict(self)
         res._update(other)
         return res

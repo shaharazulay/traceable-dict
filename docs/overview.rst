@@ -1,4 +1,4 @@
-General Idea
+General Concept
 -----
 
 Often a Python dictionary object is used to represent a pre-known structured data that captures some state of a system.

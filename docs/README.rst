@@ -70,7 +70,7 @@ Shahar Azulay, Rinat Ishak
         >>> D1.revisions
         [1, 2]
 
-   Checkout previous revisions
+  Checkout previous revisions
 
         >>> D1.as_dict()
         {'old_key': 'old_value', 'new_key': 'new_value'}

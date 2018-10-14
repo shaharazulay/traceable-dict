@@ -1,5 +1,5 @@
   
-Reverting un-wanted changes to a dictionary
+Reverting un-committed changes to a dictionary
 -----
 
     >>> from traceable_dict import TraceableDict
@@ -22,7 +22,7 @@ Reverting un-wanted changes to a dictionary
     {'old_key': 'old_value'}
     
     
-Rolling back to old revisions of the dictionary
+Checkout previous revisions of the dictionary
 -----
 
     >>> from traceable_dict import TraceableDict
@@ -46,7 +46,7 @@ Rolling back to old revisions of the dictionary
     {'old_key': 'old_value'}
     
     
-Viewing the change-log of the dictionary over the different revisions
+Displaying the commit logs over the different revisions
 -----
 
     >>> from traceable_dict import TraceableDict

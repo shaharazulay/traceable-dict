@@ -24,7 +24,6 @@ Updating a single key inside the dictionary
 -----
 
     >>> from traceable_dict import TraceableDict
-    >>> from traceable_dict._utils import key_removed, key_added, key_updated, root
     >>>
     >>> d1 = {'old_key': 'old_value'}
     >>> D1 = TraceableDict(d1)
@@ -59,7 +58,6 @@ Updating the entire dictionary while tracing the changes
 -----
 
     >>> from traceable_dict import TraceableDict
-    >>> from traceable_dict._utils import key_removed, key_added, key_updated, root
     >>>
     >>> d1 = {'old_key': 'old_value'}
     >>> D1 = TraceableDict(d1)

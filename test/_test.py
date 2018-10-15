@@ -1,6 +1,6 @@
 import time
 import unittest
-import pytest
+import warnings
 
 from traceable_dict import DictDiff
 from traceable_dict import TraceableDict
@@ -539,8 +539,10 @@ class CommitTest(unittest.TestCase):
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals([base_revision], td1.revisions)
 
-        with pytest.warns(UserWarning, match='nothing to commit'):
+        with warnings.catch_warnings(record=True) as warn:
             td1.commit(revision=18)
+        assert issubclass(warn[-1].category, UserWarning)
+        assert 'nothing to commit' in str(warn[-1].message)
 
         self.assertEquals({}, td1.trace)
         self.assertEquals(d1, td1.as_dict())

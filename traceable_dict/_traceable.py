@@ -251,7 +251,8 @@ class TraceableDict(dict):
         self[_revisions_key].pop(0)
 
         base_revision = str(self.revisions[0])
-        self[_trace_key].pop(base_revision)
+        if base_revision in self.trace.keys():
+            self[_trace_key].pop(base_revision)
 
     def as_dict(self):
         """

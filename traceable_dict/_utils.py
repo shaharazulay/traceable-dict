@@ -16,7 +16,9 @@ class KeyEvent(object):
     Describes general key event
     """
     def __eq__(self, other):
-        return repr(other) == repr(self)
+        if isinstance(other, basestring):
+            return repr(self) == other
+        return repr(self) == repr(other)
     
 
 class KeyAdded(KeyEvent):
@@ -24,7 +26,7 @@ class KeyAdded(KeyEvent):
     Indicates the key was added
     """
     def __repr__(self):
-        return "__a__"
+        return '__a__'
 
 key_added = repr(KeyAdded())
 __all__ += ['key_added']
@@ -35,7 +37,7 @@ class KeyRemoved(KeyEvent):
     Indicates the key was removed
     """
     def __repr__(self):
-        return "__r__"
+        return '__r__'
 
 key_removed = repr(KeyRemoved())
 __all__ += ['key_removed']
@@ -46,7 +48,7 @@ class KeyUpdated(KeyEvent):
     Indicates the key-value pair was updated
     """
     def __repr__(self):
-        return "__u__"
+        return '__u__'
 
 key_updated = repr(KeyUpdated())
 __all__ += ['key_updated']

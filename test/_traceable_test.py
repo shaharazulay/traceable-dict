@@ -1,6 +1,10 @@
 import warnings
 import time
 import unittest
+<<<<<<< HEAD:test/_traceable_test.py
+=======
+import warnings
+>>>>>>> c5fbbcc2148eaf60792236da82b56a9df5ce10c6:test/_test.py
 
 from traceable_dict import TraceableDict
 
@@ -380,12 +384,19 @@ class CommitTest(unittest.TestCase, _WarningTestMixin):
         self.assertFalse(td1.has_uncommitted_changes)
         self.assertEquals([base_revision], td1.revisions)
 
+<<<<<<< HEAD:test/_traceable_test.py
         self.assertWarns(
             UserWarning,
             td1.commit,
             msg='nothing to commit',
             revision=18
         )
+=======
+        with warnings.catch_warnings(record=True) as warn:
+            td1.commit(revision=18)
+        assert issubclass(warn[-1].category, UserWarning)
+        assert 'nothing to commit' in str(warn[-1].message)
+>>>>>>> c5fbbcc2148eaf60792236da82b56a9df5ce10c6:test/_test.py
 
         self.assertEquals({}, td1.trace)
         self.assertEquals(d1, td1.as_dict())

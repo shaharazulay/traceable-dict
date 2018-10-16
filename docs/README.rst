@@ -57,7 +57,7 @@ Shahar Azulay, Rinat Ishak
         
   Update the dictionary while tracing the changes
   
-        >>> D1['new_key'] = 'new_val'
+        >>> D1['new_key'] = 'new_value'
         >>> D1.trace
         {'_uncommitted_': [(('_root_', 'new_key'), None, '__a__')]}
         >>> D1.has_uncommitted_changes

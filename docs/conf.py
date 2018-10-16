@@ -26,7 +26,7 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 
 master_doc = 'index'
-project =  u'Stacker'
+project =  u'TraceableDict'
 copyright = '2018, Shahar Azulay, Rinat Ishak'
 
 version = '1.0'

@@ -59,12 +59,12 @@ Shahar Azulay, Rinat Ishak
   
         >>> D1['new_key'] = 'new_val'
         >>> D1.trace
-        {"('_root_', 'new_key')": [(None, '_A_', None)]}
+        {'_uncommitted_': [(('_root_', 'new_key'), None, '__a__')]}
         >>> D1.has_uncommitted_changes
         True
         >>> D1.commit(revision=2)
         >>> D1.trace
-        {"('_root_', 'new_key')": [(None, '_A_', 2)]}
+        {'2': [(('_root_', 'new_key'), None, '__a__')]}
         >>> D1.has_uncommitted_changes
         False
         >>> D1.revisions

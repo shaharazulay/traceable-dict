@@ -93,7 +93,7 @@ Show changes between revisions, or latest revision and working tree
     >>>
     >>> diff = D1.diff(revision=2)
     >>> diff
-    {'key3': '+++++++++value3', 'key2': '---------value2', 'key1': '---------value1 +++++++++new_value1'}
+    {'key3': '+++value3', 'key2': '---value2', 'key1': '---value1 +++new_value1'}
 
 
 Removing the oldest revision of the traceable dict

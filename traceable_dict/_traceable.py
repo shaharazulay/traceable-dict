@@ -61,6 +61,7 @@ class TraceableDict(dict):
     >>> D_original = D1.checkout(revision=1)
     >>> D_original.as_dict()
     {'old_key': 'old_value'}
+
     """
 
     __metaclass__ = TraceableMeta
@@ -96,7 +97,7 @@ class TraceableDict(dict):
             >>>
             >>> D1 = D1 | d2
             >>> D1.as_dict()
-            {'new_key': 'new_value', 'old_key': 'updated_value'}
+            {'old_key': 'updated_value', 'new_key': 'new_value'}
             
         Params:
         -------

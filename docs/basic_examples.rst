@@ -6,7 +6,7 @@ Creating the traceable dict for the first time
     >>>
     >>> D1 = TraceableDict(d1)
     >>> D1
-    {'first_key': 'first_value', '__trace__': {}, '__revisions__': []}
+    {'__trace__': {}, '__revisions__': [], 'first_key': 'first_value'}
     >>> D1.revisions
     []
     >>> D1.has_uncommitted_changes
@@ -17,7 +17,6 @@ Creating the traceable dict for the first time
     >>> D1.has_uncommitted_changes
     False
     >>> D1.revisions
-    >>> 
     [1]
     
 Updating a single key inside the dictionary
@@ -71,7 +70,7 @@ Updating the entire dictionary while tracing the changes
     >>>
     >>> D1 = D1 | d2
     >>> D1.as_dict()
-    {'new_key': 'new_value', 'old_key': 'updated_value'}
+    {'old_key': 'updated_value', 'new_key': 'new_value'}
     >>> D1.trace
     {'_uncommitted_': [(('_root_', 'old_key'), 'old_value', '__u__'), (('_root_', 'new_key'), None, '__a__')]}
     >>>

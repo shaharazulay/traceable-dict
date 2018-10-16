@@ -8,9 +8,9 @@ Reverting un-committed changes to a dictionary
     >>> D1 = TraceableDict(d1)
     >>> D1.commit(revision=1)
     >>>
-    >>> D1['new_key'] = 'new_val'
+    >>> D1['new_key'] = 'new_value'
     >>> D1.as_dict() 
-    {'new_key': 'new_val', 'old_key': 'old_value'}
+    {'old_key': 'old_value', 'new_key': 'new_value'}
     >>> D1.trace
     {'_uncommitted_': [(('_root_', 'new_key'), None, '__a__')]}
     >>>
@@ -35,7 +35,7 @@ Checkout previous revisions of the dictionary
     >>>
     >>> D1 = D1 | d2
     >>> D1.as_dict()
-    {'new_key': 'new_value', 'old_key': 'updated_value'}
+    {'old_key': 'updated_value', 'new_key': 'new_value'}
     >>>
     >>> D1.commit(revision=2)
     >>> D1.revisions
@@ -79,23 +79,21 @@ Show changes between revisions, or latest revision and working tree
     >>> d1 = {
     ... 'key1': 'value1',
     ... 'key2': 'value2'
-    >>> }
+    ... }
     >>> D1 = TraceableDict(d1)
     >>> D1.commit(revision=1)
     >>>
     >>> d2 = {
     ... 'key1': 'new_value1',
     ... 'key3': 'value3'
-    >>> }
+    ... }
     >>> 
     >>> D1 = D1 | d2
     >>> D1.commit(revision=2)
     >>>
     >>> diff = D1.diff(revision=2)
     >>> diff
-    {'key1': '---------value1 +++++++++new_value1',
-     'key2': '---------value2',
-     'key3': '+++++++++value3'}
+    {'key3': '+++++++++value3', 'key2': '---------value2', 'key1': '---------value1 +++++++++new_value1'}
 
 
 Removing the oldest revision of the traceable dict

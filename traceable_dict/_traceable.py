@@ -67,10 +67,12 @@ class TraceableDict(dict):
     __metaclass__ = TraceableMeta
 
     def __init__(self, *args, **kwargs):
+        # TODO: handle init of dict with uncommitted changes
+
         super(TraceableDict, self).__init__(*args, **kwargs)
         self.setdefault(_trace_key, {})
         self.setdefault(_revisions_key, [])
-        # TODO: handle init of dict with uncommitted changes
+
         self._has_uncommitted_changes = False
         if not self.revisions:
             self._has_uncommitted_changes = True
@@ -137,8 +139,7 @@ class TraceableDict(dict):
             self[_trace_key][str(revision)] = self[_trace_key].pop(uncommitted)
 
         self._has_uncommitted_changes = False
-        if revision not in self.revisions:
-            self[_revisions_key].append(revision)
+        self[_revisions_key].append(revision)
 
     def revert(self):
         """
@@ -186,6 +187,7 @@ class TraceableDict(dict):
                 The log of dictionary values, per-revision.
         """
         d_augmented = self._augment(path)
+
         result = {}
         for revision in d_augmented.revisions:
             value = d_augmented._checkout(revision=revision).as_dict()
@@ -214,7 +216,7 @@ class TraceableDict(dict):
             d = self._augment(path)
 
         if revision == d.revisions[0]:
-            return d.as_dict()
+            return
 
         if revision is None:
             if not d.has_uncommitted_changes:
@@ -228,20 +230,21 @@ class TraceableDict(dict):
             events = d.trace[str(revision)]
             d = d._checkout(revision=revision)
 
-        d = copy.deepcopy(d.as_dict())
+        _diff_dict = {
+            key_added: lambda v_before, v: '+++' + str(value),
+            key_removed: lambda v_before, v: '---' + str(value_before),
+            key_updated: lambda v_before, v: '---' + str(value_before) + ' +++' + str(value)
+        }
+
+        d_diff = copy.deepcopy(d.as_dict())
 
         for event in events:
             _path, value_before, type_ = event
-            value = nested_getitem(d, _path)
+            value = nested_getitem(d_diff, _path)
 
-            if type_ == key_added:
-                nested_setitem(d, _path, '+++++++++' + str(value))
-            if type_ == key_removed:
-                nested_setitem(d, _path, '---------' + str(value_before))
-            if type_ == key_updated:
-                nested_setitem(d, _path, '---------' + str(value_before) + ' +++++++++' + str(value))
+            nested_setitem(d_diff, _path, _diff_dict[type_](value_before, value))
 
-        return d
+        return d_diff
 
     def remove_oldest_revision(self):
         """
@@ -335,7 +338,13 @@ class TraceableDict(dict):
             raise ValueError("path cannot be empty")
 
         trace_aug = {}
-        revisions_aug = [self.revisions[0]] if self.revisions else []
+
+        if self.revisions:
+            base_value = self._checkout(self.revisions[0])
+            is_path_in_base_revision = nested_getitem(base_value, path) != {}
+            revisions_aug = [self.revisions[0]] if is_path_in_base_revision else []
+        else:
+            revisions_aug = []
 
         for revision in self.trace.keys():
             events_aug = []

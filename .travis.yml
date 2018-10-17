@@ -11,7 +11,9 @@ install:
 
 script: 
   - python setup.py test
-  - coverage run --source=test/
+  - coverage run -a test/_traceable_test.py
+  - coverage run -a test/_utils_test.py
+  - coverage run -a test/_diff_test.py
   
 after_success:
   - codecov

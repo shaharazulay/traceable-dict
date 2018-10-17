@@ -977,6 +977,10 @@ class DiffTests(unittest.TestCase):
             {"B": {"D": [2, 3, 5], "E": "+++1"}}
         )
 
+
+        diff = td1.diff(revision=4, path=('A', 'B', 'E'))
+        self.assertFalse(diff)
+
     def test_log_no_revisions(self):
         d1 = {"A": {"B": {"C": 1, "D": [2, 3]}}}
         td1 = TraceableDict(d1)
@@ -1027,7 +1031,6 @@ class DiffTests(unittest.TestCase):
         unknown_revision = 2
         with self.assertRaises(ValueError) as err:
             td1.diff(revision=unknown_revision)
-        print '----->  ', err.exception
         self.assertTrue('unknown revision %s' % unknown_revision in err.exception)
 
         with self.assertRaises(ValueError) as err:

@@ -191,6 +191,8 @@ class TraceableDict(dict):
         result = {}
         for revision in d_augmented.revisions:
             value = d_augmented._checkout(revision=revision).as_dict()
+            value = value if value else {path[-1]: {}}
+
             result.update({revision: value})
             print 'changeset:   %s' % revision
             print 'value:       %s\n\n' % value

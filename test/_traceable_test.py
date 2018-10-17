@@ -1077,11 +1077,17 @@ class RemoveOldestRevisionTests(unittest.TestCase):
         self.assertEquals(td1.revisions, [r2, r3, r4, r5])
         self.assertEquals(set(td1.trace.keys()), set([str(r3), str(r4), str(r5)]))
 
+        td_past_revision = td1.checkout(revision=r2)
+        self.assertEquals(td_past_revision.as_dict(), d2)
+
         td1.remove_oldest_revision()
 
         self.assertEquals(td1.as_dict(), d5)
         self.assertEquals(td1.revisions, [r3, r4, r5])
         self.assertEquals(set(td1.trace.keys()), set([str(r4), str(r5)]))
+
+        td_past_revision = td1.checkout(revision=r3)
+        self.assertEquals(td_past_revision.as_dict(), d3)
 
     def test_remove_no_revisions(self):
         d1 = {"a": "aa", "b":"bb"}

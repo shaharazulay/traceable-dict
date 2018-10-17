@@ -72,10 +72,10 @@ RunTime Performance
 
 Here are the general asymptotic bounds of expected runtime performance:
 
-1. *as_dict* - Access to the latest dict revision is done in O(k), where k is the number of k
-2. *commit* - Assigning a meaningful revision id to all uncommited changes is done in O(1).
-3. *revert* - Reverting all uncommited changes is done in O(1).
-4. *checkout* - Rolling back to an old revision is done in O(m + n) where m is the number of revisions between the working tree and the desired revision, and n is the number of per-key diffs performed between the two revisions.
-5. *remove_oldest_revision* - Removing the oldest revision is done in O(1).
-6. *log* - Displaying commit logs shows similar performance to *checkout* method.
-7. *diff* - Showing changes between revisions shows similar performance to *checkout* method.
+1. **as_dict** - Access to the latest dict revision is done in **O(k)**, where k is the number of k
+2. **commit** - Assigning a meaningful revision id to all uncommited changes is done in **O(1)**.
+3. **revert** - Reverting all uncommited changes is done in **O(1)**.
+4. **checkout** - Rolling back to an old revision is done in **O(m + n)** where m is the number of revisions between the working tree and the desired revision, and n is the number of per-key diffs performed between the two revisions.
+5. **remove_oldest_revision** - Removing the oldest revision is done in **O(1)**.
+6. **log** - Displaying commit logs shows similar performance to *checkout* method.
+7. **diff** - Showing changes between revisions shows similar performance to *checkout* method.

@@ -71,14 +71,13 @@ class TraceableDict(dict):
     __metaclass__ = TraceableMeta
 
     def __init__(self, *args, **kwargs):
-        # TODO: handle init of dict with uncommitted changes
-
         super(TraceableDict, self).__init__(*args, **kwargs)
         self.setdefault(_trace_key, {})
         self.setdefault(_revisions_key, [])
 
         self._has_uncommitted_changes = False
-        if not self.revisions:
+
+        if (not self.revisions) or (uncommitted in self.trace):
             self._has_uncommitted_changes = True
 
     def __or__(self, other):

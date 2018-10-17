@@ -225,22 +225,37 @@ class TraceableTest(unittest.TestCase):
             trace)
 
     def test_init_traceable_dict(self):
-        r1, r2 = int((time.time()*1) * 1000), int((time.time()*2) * 1000)
+        r1, r2 = 1, 2
 
         td1 = TraceableDict({'a': 1, 'b':2})
+
+        self.assertEquals(td1.trace, {})
+        self.assertEquals(td1.revisions, [])
+        self.assertTrue(td1.has_uncommitted_changes)
+
         td1.commit(revision=r1)
-
-        td1['a'] = 8
-        td1.commit(revision=r2)
-
-        self.assertEquals(td1.as_dict(), {'a': 8, 'b': 2})
-        self.assertEquals(td1.trace, {str(r2): [(('_root_', 'a'), 1, key_updated)]})
-        self.assertEquals(td1.revisions, [r1, r2])
+        self.assertEquals(td1.as_dict(), {'a': 1, 'b': 2})
+        self.assertFalse(td1.has_uncommitted_changes)
+        self.assertEquals(td1.revisions, [r1])
 
         td2 = TraceableDict(td1)
+
         self.assertEquals(td2.as_dict(), td1.as_dict())
-        self.assertEquals(td2.trace, td1.trace)
+        self.assertFalse(td2.has_uncommitted_changes)
         self.assertEquals(td2.revisions, td1.revisions)
+        self.assertEquals(td2.trace, td1.trace)
+
+
+        td1['a'] = 8
+        td2 = TraceableDict(td1)
+
+        self.assertEquals(td2.as_dict(), td1.as_dict())
+        self.assertTrue(td2.has_uncommitted_changes)
+        self.assertEquals(td2.revisions, td1.revisions)
+        self.assertEquals(td2.trace, td1.trace)
+
+        td2.commit(revision=r2)
+        self.assertFalse(td2.has_uncommitted_changes)
 
 
 class CommitTest(unittest.TestCase, _WarningTestMixin):

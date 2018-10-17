@@ -28,7 +28,8 @@ The Solution
 
 There are many possible solutions to trace the changes in a dict-like object. The major differences between them is the way in which the trace history is stored.
 
-The two main possibilities go back to:
+The three main possibilities go back to:
+
 1. **In-Object** solution - where the trace is embedded into the dict-like object itself.
 2. **Out-Of-Object** solution - where the trace is stored using some additional attribute of the dict-like object.
 2. **Trace by Multiple Objects** solution - where the trace is stored by storing multiple copies of the dict-like object, usually equal to the number of known reivisions.
@@ -38,23 +39,19 @@ Therefore, we chose to not address this solution as viable.
 
 We chose to focus our solution to work well for non-relational DBs, which store document JSON-like documents natively.
 The *Trace by Multiple Objects* solution would force the creation of multiple documents in the DB, possibly resulting in a high memory overhead, if objects are kept in full.
-However, such solution would provide fast extraction time for the latest revision of the document.
-A possible upgrade of this solution would be to store diffs between document revisions only, but that would possiblt result in a high extraction time of the latest version.
+
+However, such solution would provide quick access time for the latest revision of the document.
+A possible upgrade of this solution would be to store diffs between document revisions only, but that would possiblt result in a slower accesss time of the latest version.
+
+.. image:: _static/trace_methods.jpg
+
+*[1] In-Objecr and Multiple Objects methods for tracing the changes in a JSON-like object*
+
 
 We chose to store the trace *In-Object*. While this method is limited by the max allowed size of the document, and may not be suitable for very large documents, we found it to be the most elegant solution.
 
-The trace is stored as part of the dict-like structure of the document allowing...
+The trace is stored as part of the dict-like structure of the document allowing **quick access** to the latest revision, while storing only diffs between revision which results in **lower memory costs**.
 
-
-The wrong way to perform stacking would be to
-
-1. **Train** the first level models over the target.
-
-2. Get the first level models predictions over the inputs.
-
-3. **Train** the meta-level Stacker over the predictions of the first level models.
-
-Why would that be the wrong way to go?
 
 **Overfitting**
 

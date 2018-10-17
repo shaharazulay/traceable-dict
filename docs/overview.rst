@@ -33,7 +33,7 @@ The three main possibilities go back to:
 
 1. **In-Object** solution - where the trace is embedded into the dict-like object itself.
 2. **Out-Of-Object** solution - where the trace is stored using some additional attribute of the dict-like object.
-2. **Trace by Multiple Objects** solution - where the trace is stored by storing multiple copies of the dict-like object, usually equal to the number of known reivisions.
+3. **Trace by Multiple Objects** solution - where the trace is stored by storing multiple copies of the dict-like object, usually equal to the number of known reivisions.
 
 The use of the Out-Of-Object method is not relevant in cases where the object needs to go through serializaion, such as in cases where the object needs to be stored on disk, in a database or in any other non-Python native and consistent form.
 Therefore, we chose to not address this solution as viable.
